@@ -1352,6 +1352,7 @@ function goTo(n) {
   window.scrollTo(0,0);
   const prog = document.getElementById('prog');
   if(prog) prog.style.width = ((n/(PAGES.length-1))*100)+'%';
+  if(n===3 && stage1Scores.finAvg!==undefined) { setTimeout(()=>rebuildChart(), 50); }
   if(n===4 && stage1Scores.finAvg!==undefined) buildInsights();
   if(n===5) loadSavedEvaluations();
 }
