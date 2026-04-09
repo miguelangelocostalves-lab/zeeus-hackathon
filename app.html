@@ -852,9 +852,8 @@ const SDG_NAMES = {
 // ── Build UI ──────────────────────────────────────────────────
 
 function syncMainCat() {
-  // When main category selected, clear NACE extended selection
-  document.getElementById('bizcat').value = '';
-  document.getElementById('subcat-wrap').style.visibility = 'hidden';
+  // Main category selected - NACE list still available independently
+  // No need to clear NACE selection
 }
 
 function updateSubcats() {
@@ -1400,7 +1399,7 @@ function goTo(n) {
 
 function saveBasicAndNext() {
   if(!document.getElementById('name').value){alert('Please fill in the startup name.');return;}
-  if(!document.getElementById('bizcat_main').value && !document.getElementById('bizcat').value){alert('Please select a business category.');return;}
+  if(!document.getElementById('bizcat_main').value && !document.getElementById('bizcat').value){alert('Please select at least a main category or a NACE division.');return;}
   goTo(1);
 }
 
@@ -1700,6 +1699,8 @@ async function saveEvaluation() {
     country: document.getElementById('country').value || document.getElementById('country-search').value,
     stage: document.getElementById('stage').value,
     bizcat: document.getElementById('bizcat').value || document.getElementById('bizcat_main').value,
+    bizcat_main: document.getElementById('bizcat_main').value,
+    bizcat_sub: document.getElementById('bizcat_sub').value,
     approach: document.getElementById('approach').value,
     prodservice: document.getElementById('prodservice').value,
     launched: document.getElementById('launched').value,
