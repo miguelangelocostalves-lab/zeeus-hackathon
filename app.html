@@ -217,7 +217,6 @@ textarea{resize:vertical;line-height:1.5}
   <button onclick="goTo(3)"><span class="nav-icon">📊</span>Dashboard</button>
   <button onclick="goTo(4)"><span class="nav-icon">💡</span>Insights</button>
   <button onclick="goTo(5)"><span class="nav-icon">📤</span>Export</button>
-  <button onclick="goTo(6)"><span class="nav-icon">🗺️</span>Roadmap</button>
 </div>
 
 <!-- PAGE 0: Basic Info -->
@@ -581,7 +580,7 @@ textarea{resize:vertical;line-height:1.5}
 </div>
 
 <script>
-const PAGES = ['p0','p1','p2','p3','p4','p5','p6'];
+const PAGES = ['p0','p1','p2','p3','p4','p5'];
 let currentPage = 0;
 let stage1Scores = {};
 let stage2Scores = {};
@@ -2407,93 +2406,6 @@ buildStage2UI();
 if(Object.keys(currentCountryRisks).length) updateStage1CountryHints();
 setTimeout(initZSelects, 100);
 </script>
-
-<!-- PAGE 6: Post-Hackathon Roadmap -->
-<div class="page" id="p6">
-
-  <div class="info-box">
-    <span class="info-box-icon">🗺️</span>
-    <div><strong>Post-Hackathon Roadmap</strong><br>
-    This roadmap outlines the planned evolution of the ZEEUS Sustainability Evaluation Tool beyond the hackathon prototype.</div>
-  </div>
-
-  <div class="card">
-    <div class="card-header"><div class="card-icon green">🔐</div><div><h2>Phase 1 — Foundation (Months 1–3)</h2><div class="card-sub">Core infrastructure improvements</div></div></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
-      <div style="background:var(--bg);border-radius:8px;padding:.9rem">
-        <div style="font-size:.85rem;font-weight:600;color:var(--green-dark);margin-bottom:.4rem">👤 User Authentication</div>
-        <div style="font-size:.8rem;color:var(--text2);line-height:1.6">Implement secure login and registration system with role-based access (user vs admin). Allow multiple startups per account.</div>
-      </div>
-      <div style="background:var(--bg);border-radius:8px;padding:.9rem">
-        <div style="font-size:.85rem;font-weight:600;color:var(--green-dark);margin-bottom:.4rem">🗄️ PostgreSQL Migration</div>
-        <div style="font-size:.8rem;color:var(--text2);line-height:1.6">Migrate from SQLite to PostgreSQL for production-grade scalability, supporting thousands of simultaneous evaluations.</div>
-      </div>
-      <div style="background:var(--bg);border-radius:8px;padding:.9rem">
-        <div style="font-size:.85rem;font-weight:600;color:var(--green-dark);margin-bottom:.4rem">🔒 Security Hardening</div>
-        <div style="font-size:.8rem;color:var(--text2);line-height:1.6">Add HTTPS, input sanitisation, password hashing, audit logs and GDPR-compliant data handling.</div>
-      </div>
-      <div style="background:var(--bg);border-radius:8px;padding:.9rem">
-        <div style="font-size:.85rem;font-weight:600;color:var(--green-dark);margin-bottom:.4rem">📱 Responsive Mobile UI</div>
-        <div style="font-size:.8rem;color:var(--text2);line-height:1.6">Optimise the interface for mobile devices to allow evaluations on-the-go by startup founders and mentors.</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-header"><div class="card-icon green">⚡</div><div><h2>Phase 2 — Enhancement (Months 4–6)</h2><div class="card-sub">Advanced features and integrations</div></div></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
-      <div style="background:var(--bg);border-radius:8px;padding:.9rem">
-        <div style="font-size:.85rem;font-weight:600;color:var(--green-dark);margin-bottom:.4rem">🤖 AI Recommendations</div>
-        <div style="font-size:.8rem;color:var(--text2);line-height:1.6">Full integration with LLM APIs for context-aware, personalised sustainability recommendations based on industry, stage and scores.</div>
-      </div>
-      <div style="background:var(--bg);border-radius:8px;padding:.9rem">
-        <div style="font-size:.85rem;font-weight:600;color:var(--green-dark);margin-bottom:.4rem">📊 Advanced Analytics</div>
-        <div style="font-size:.8rem;color:var(--text2);line-height:1.6">Benchmarking against industry averages, trend analysis over multiple evaluations, and cohort comparisons across Seed Factory networks.</div>
-      </div>
-      <div style="background:var(--bg);border-radius:8px;padding:.9rem">
-        <div style="font-size:.85rem;font-weight:600;color:var(--green-dark);margin-bottom:.4rem">📄 Professional PDF Reports</div>
-        <div style="font-size:.8rem;color:var(--text2);line-height:1.6">Generate branded PDF reports with ZEEUS visual identity, charts, SDG alignment and recommendations — ready for investors and partners.</div>
-      </div>
-      <div style="background:var(--bg);border-radius:8px;padding:.9rem">
-        <div style="font-size:.85rem;font-weight:600;color:var(--green-dark);margin-bottom:.4rem">🔗 Babele Platform Integration</div>
-        <div style="font-size:.8rem;color:var(--text2);line-height:1.6">Direct API integration with the Babele platform to synchronise evaluation data with startup profiles and ecosystem tools.</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-header"><div class="card-icon green">🚀</div><div><h2>Phase 3 — Scale (Months 7–12)</h2><div class="card-sub">Ecosystem expansion</div></div></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
-      <div style="background:var(--bg);border-radius:8px;padding:.9rem">
-        <div style="font-size:.85rem;font-weight:600;color:var(--green-dark);margin-bottom:.4rem">🌍 Multi-Language Support</div>
-        <div style="font-size:.8rem;color:var(--text2);line-height:1.6">Localisation for key ZEEUS partner languages including Portuguese, German, French and Swahili to support Global North-to-South reach.</div>
-      </div>
-      <div style="background:var(--bg);border-radius:8px;padding:.9rem">
-        <div style="font-size:.85rem;font-weight:600;color:var(--green-dark);margin-bottom:.4rem">🏛️ Admin Dashboard</div>
-        <div style="font-size:.8rem;color:var(--text2);line-height:1.6">Institution-level dashboard for Seed Factory managers to oversee all startup evaluations, track progress and generate aggregate reports.</div>
-      </div>
-      <div style="background:var(--bg);border-radius:8px;padding:.9rem">
-        <div style="font-size:.85rem;font-weight:600;color:var(--green-dark);margin-bottom:.4rem">📡 Public API</div>
-        <div style="font-size:.8rem;color:var(--text2);line-height:1.6">REST API for third-party integrations, allowing HEIs and accelerators to embed sustainability evaluation into their own platforms.</div>
-      </div>
-      <div style="background:var(--bg);border-radius:8px;padding:.9rem">
-        <div style="font-size:.85rem;font-weight:600;color:var(--green-dark);margin-bottom:.4rem">☁️ Cloud Deployment</div>
-        <div style="font-size:.8rem;color:var(--text2);line-height:1.6">Deploy to AWS, Azure or GCP with auto-scaling, load balancing and 99.9% uptime SLA to support the full ZEEUS Seed Factory network.</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-header"><div class="card-icon blue">📈</div><div><h2>Long-term Vision</h2><div class="card-sub">Beyond 12 months</div></div></div>
-    <div style="font-size:.88rem;color:var(--text2);line-height:1.8">
-      The ZEEUS Sustainability Evaluation Tool aims to become the <strong>standard assessment framework</strong> for impact-driven startups across the Global North-to-South dimension. 
-      Long-term goals include full <strong>CSRD compliance reporting</strong> for scaling startups, integration with <strong>ESG data providers</strong>, 
-      a <strong>sustainability certification pathway</strong> aligned with ESRS standards, and a <strong>federated network</strong> 
-      connecting all ZEEUS Seed Factories through shared benchmarking data.
-    </div>
-  </div>
-
-</div>
 
 </body>
 </html>
