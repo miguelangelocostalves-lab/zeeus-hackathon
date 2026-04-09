@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZEEUS – Startup Sustainability Evaluation Tool</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<style>
+:root{
+  --green-dark:#0f3d22;--green:#1a5c34;--green-mid:#2d7a4f;--green-light:#e6f4ec;
+  --accent:#34c47c;--accent2:#f0a500;
+  --bg:#f0f4f0;--bg2:#e8efe9;
+  --white:#fff;--border:#dde8de;
+  --text:#1a1a1a;--text2:#4a5a4e;--text3:#7a8f80;
+  --red:#e53e3e;--amber:#d97706;--emerald:#059669;
+  --radius:12px;--radius-lg:16px;--shadow:0 2px 12px rgba(0,0,0,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:15px;min-height:100vh}
+
+/* Header */
+.header{background:linear-gradient(135deg,var(--green-dark) 0%,var(--green-mid) 100%);color:#fff;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between}
+.header-left{display:flex;align-items:center;gap:.75rem}
+.header-logo{width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.header h1{font-size:1.1rem;font-weight:700;letter-spacing:-.01em}
+.header span{font-size:.78rem;opacity:.7;display:block;margin-top:.1rem}
+.header-badge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:.25rem .75rem;font-size:.75rem;color:#fff}
+
+/* Progress bar */
+.progress-bar{background:rgba(255,255,255,.1);height:3px}
+.progress-fill{height:100%;background:var(--accent);transition:width .4s ease}
+
+/* Nav */
+.nav{background:var(--white);border-bottom:1px solid var(--border);display:flex;gap:0;overflow-x:auto;padding:0 1rem}
+.nav button{padding:.7rem 1rem;border:none;background:none;cursor:pointer;font-size:.82rem;color:var(--text3);white-space:nowrap;border-bottom:2px solid transparent;transition:.15s;display:flex;align-items:center;gap:.4rem}
+.nav button.active{color:var(--green);border-bottom-color:var(--accent);font-weight:600}
+.nav button:hover:not(.active){color:var(--text2);background:var(--bg)}
+.nav-icon{font-size:.9rem}
+
+/* Pages */
+.page{display:none;padding:1.5rem 2rem 3rem;max-width:920px;margin:0 auto}
+.page.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* Cards */
+.card{background:var(--white);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.2rem;border:1px solid var(--border);box-shadow:var(--shadow)}
+.card-header{display:flex;align-items:center;gap:.6rem;margin-bottom:1.1rem}
+.card-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.card-icon.green{background:var(--green-light)}
+.card-icon.amber{background:#fef3c7}
+.card-icon.red{background:#fee2e2}
+.card-icon.blue{background:#dbeafe}
+.card h2{font-size:.95rem;font-weight:600;color:var(--text);margin:0}
+.card-sub{font-size:.75rem;color:var(--text3);margin-top:.1rem}
+
+/* Section title standalone */
+.section-title{font-size:.95rem;font-weight:600;color:var(--text);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+
+/* Forms */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:.9rem}
+.form-row.full{grid-template-columns:1fr}
+.field-wrap{position:relative}
+label{display:block;font-size:.78rem;font-weight:600;color:var(--text2);margin-bottom:.35rem;display:flex;align-items:center;gap:.3rem}
+.tooltip-icon{display:inline-flex;width:15px;height:15px;background:var(--bg2);border-radius:50%;align-items:center;justify-content:center;font-size:.65rem;color:var(--text3);cursor:help;flex-shrink:0;position:relative}
+.tooltip-icon:hover::after{content:attr(data-tip);position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 6px);background:#1a1a1a;color:#fff;font-size:.72rem;padding:.4rem .6rem;border-radius:6px;white-space:nowrap;max-width:220px;white-space:normal;z-index:100;line-height:1.4;width:200px;text-align:left}
+input[type=text],select,textarea{width:100%;padding:.55rem .85rem;border:1.5px solid var(--border);border-radius:8px;font-size:.88rem;background:var(--white);color:var(--text);transition:.15s;font-family:inherit}
+input[type=text]:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(52,196,124,.15)}
+textarea{resize:vertical;line-height:1.5}
+
+/* Buttons */
+.btn{padding:.6rem 1.4rem;border-radius:8px;border:none;cursor:pointer;font-size:.88rem;font-weight:600;transition:.15s;display:inline-flex;align-items:center;gap:.4rem}
+.btn-primary{background:var(--green);color:#fff;box-shadow:0 2px 8px rgba(26,92,52,.3)}
+.btn-primary:hover{background:var(--green-dark);transform:translateY(-1px);box-shadow:0 4px 12px rgba(26,92,52,.35)}
+.btn-outline{background:var(--white);border:1.5px solid var(--green);color:var(--green)}
+.btn-outline:hover{background:var(--green-light)}
+.btn-row{display:flex;justify-content:flex-end;gap:.75rem;margin-top:1.5rem}
+
+/* Impact items */
+.impact-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.impact-item{background:var(--bg);border-radius:10px;padding:.9rem;margin-bottom:.75rem;border:1px solid var(--border);transition:.15s}
+.impact-item:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(52,196,124,.1)}
+.impact-item-title{font-size:.83rem;font-weight:600;margin-bottom:.3rem;color:var(--text);display:flex;align-items:center;gap:.4rem}
+.impact-item-q{font-size:.75rem;color:var(--text3);margin-bottom:.6rem;line-height:1.4}
+.impact-item .selects{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem}
+.impact-item .selects select{font-size:.78rem;padding:.3rem .5rem;border-radius:6px}
+.impact-item label{font-size:.7rem;color:var(--text3);margin-bottom:.2rem;font-weight:500}
+
+/* Score badges */
+.score-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .65rem;border-radius:20px;font-size:.78rem;font-weight:700}
+.score-low{background:#fee2e2;color:#b91c1c}
+.score-mid{background:#fef3c7;color:#92400e}
+.score-high{background:#d1fae5;color:#065f46}
+
+/* Material topics */
+.material{background:linear-gradient(135deg,#fef9e7,#fef3c7);border-left:3px solid var(--accent2);padding:.6rem .9rem;border-radius:0 8px 8px 0;font-size:.82rem;margin:.4rem 0;display:flex;align-items:center;gap:.5rem}
+
+/* Risk items */
+.risk-item{background:var(--bg);border-radius:10px;padding:.9rem;margin-bottom:.75rem;border:1px solid var(--border)}
+.risk-item p{font-size:.82rem;font-weight:600;margin-bottom:.5rem;color:var(--text)}
+.risk-item .selects{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem}
+.risk-item .selects select{font-size:.78rem;padding:.3rem .5rem}
+
+/* Dashboard metric cards */
+.dashboard-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.85rem;margin-bottom:1.2rem}
+.metric-card{background:var(--white);border-radius:var(--radius);padding:1.1rem 1rem;border:1px solid var(--border);text-align:center;box-shadow:var(--shadow);transition:.2s}
+.metric-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.1)}
+.metric-card .m-icon{font-size:1.4rem;margin-bottom:.4rem}
+.metric-card .label{font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.35rem;font-weight:600}
+.metric-card .value{font-size:1.8rem;font-weight:700;color:var(--green)}
+.metric-card .sub{font-size:.7rem;color:var(--text3);margin-top:.2rem}
+
+/* SDG chips */
+.sdg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:.6rem}
+.sdg-chip{background:linear-gradient(135deg,#e6f4ec,#d4eede);border-radius:10px;padding:.6rem .4rem;text-align:center;font-size:.7rem;font-weight:600;color:var(--green-dark);border:1px solid #b8dfc7;transition:.15s;cursor:default}
+.sdg-chip:hover{transform:translateY(-1px);box-shadow:0 3px 8px rgba(26,92,52,.15)}
+.sdg-chip .num{font-size:1rem;font-weight:800;display:block;margin-bottom:.15rem}
+
+/* Charts */
+.chart-wrap{position:relative;height:280px}
+.chart-toggle{display:flex;gap:.4rem;margin-bottom:.75rem}
+.chart-toggle button{padding:.3rem .8rem;border-radius:6px;border:1.5px solid var(--border);background:var(--white);font-size:.78rem;cursor:pointer;color:var(--text3);transition:.15s}
+.chart-toggle button.active{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* Info box */
+.info-box{background:linear-gradient(135deg,var(--green-light),#d4f0e4);border-radius:10px;padding:1rem 1.1rem;font-size:.82rem;color:var(--green-dark);margin-bottom:1.1rem;line-height:1.6;border:1px solid #b8dfc7;display:flex;gap:.6rem;align-items:flex-start}
+.info-box-icon{font-size:1.1rem;flex-shrink:0;margin-top:.1rem}
+
+/* Progress steps */
+.step-progress{display:flex;align-items:center;gap:0;margin-bottom:1.5rem}
+.step{display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--text3)}
+.step.done{color:var(--green)}
+.step.active{color:var(--green);font-weight:600}
+.step-dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;background:var(--white);flex-shrink:0}
+.step.done .step-dot{background:var(--accent);border-color:var(--accent);color:#fff}
+.step.active .step-dot{background:var(--green);border-color:var(--green);color:#fff}
+.step-line{flex:1;height:2px;background:var(--border);min-width:12px}
+.step-line.done{background:var(--accent)}
+
+/* Pill selectors */
+.pill-group{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.25rem}
+.pill{padding:.28rem .65rem;border-radius:20px;border:1.5px solid var(--border);background:var(--white);font-size:.75rem;cursor:pointer;color:var(--text2);transition:.15s;font-weight:500;white-space:nowrap}
+.pill:hover{border-color:var(--accent);color:var(--green)}
+.pill.selected-na{background:#f1f5f9;border-color:#94a3b8;color:#64748b}
+.pill.selected-low{background:#d1fae5;border-color:#6ee7b7;color:#065f46}
+.pill.selected-mod{background:#fef3c7;border-color:#fcd34d;color:#92400e}
+.pill.selected-sig{background:#ffedd5;border-color:#fdba74;color:#9a3412}
+.pill.selected-high{background:#fee2e2;border-color:#fca5a5;color:#b91c1c}
+.pill.selected-vunlikely{background:#ede9fe;border-color:#c4b5fd;color:#5b21b6}
+.pill.selected-unlikely{background:#dbeafe;border-color:#93c5fd;color:#1e40af}
+.pill.selected-likely{background:#fef3c7;border-color:#fcd34d;color:#92400e}
+.pill.selected-vlikely{background:#fee2e2;border-color:#fca5a5;color:#b91c1c}
+.pill.selected-couldoccur{background:#fef3c7;border-color:#fcd34d;color:#92400e}
+.pill.selected-rare{background:#d1fae5;border-color:#6ee7b7;color:#065f46}
+.risk-item-header{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem}
+.risk-cat-badge{font-size:.72rem;font-weight:700;padding:.2rem .55rem;border-radius:10px;background:#fee2e2;color:#b91c1c}
+.opp-cat-badge{font-size:.72rem;font-weight:700;padding:.2rem .55rem;border-radius:10px;background:#d1fae5;color:#065f46}
+.risk-question{font-size:.82rem;font-weight:500;color:var(--text);margin-bottom:.65rem}
+.pill-row{margin-bottom:.5rem}
+.pill-row-label{font-size:.72rem;font-weight:600;color:var(--text3);margin-bottom:.3rem;display:flex;align-items:center;gap:.3rem}
+.na-toggle{display:flex;align-items:center;gap:.4rem;margin-top:.5rem;font-size:.78rem;color:var(--text3);cursor:pointer}
+.na-toggle input{cursor:pointer}
+
+@media(max-width:650px){
+.form-row,.impact-grid,.dashboard-grid{grid-template-columns:1fr}
+.impact-item .selects{grid-template-columns:1fr}
+.header-badge{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">🌱</div>
+    <div>
+      <h1>ZEEUS Sustainability Tool</h1>
+      <span>Startup Evaluation · Powered by ESRS & UN SDGs</span>
+    </div>
+  </div>
+  <div class="header-badge">Web Edition</div>
+</div>
+<div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+
+<div class="nav">
+  <button class="active" onclick="goTo(0)"><span class="nav-icon">📋</span>Basic Info</button>
+  <button onclick="goTo(1)"><span class="nav-icon">🌿</span>Stage I</button>
+  <button onclick="goTo(2)"><span class="nav-icon">⚠️</span>Stage II</button>
+  <button onclick="goTo(3)"><span class="nav-icon">📊</span>Dashboard</button>
+  <button onclick="goTo(4)"><span class="nav-icon">💡</span>Insights</button>
+  <button onclick="goTo(5)"><span class="nav-icon">📤</span>Export</button>
+</div>
+
+<!-- PAGE 0: Basic Info -->
+<div class="page active" id="p0">
+  <div class="card">
+    <div class="card-header"><div class="card-icon green">📋</div><div><h2>Basic information about your startup</h2><div class="card-sub">Fill in the details about your startup or idea</div></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:.85rem">
+      <div><label>Startup / Idea name</label><input type="text" id="name" placeholder="e.g. GreenFleet"></div>
+      <div><label>Country</label>
+        <select id="country">
+          <option value="">Select country…</option>
+          <option>Portugal</option><option>Germany</option><option>France</option><option>Netherlands</option>
+          <option>Sweden</option><option>Spain</option><option>Italy</option><option>South Africa</option>
+          <option>Kenya</option><option>Nigeria</option><option>Other</option>
+        </select>
+      </div>
+      <div>
+        <label>Business category (NACE)</label>
+        <select id="bizcat" onchange="updateSubcats()">
+          <option value="">Select NACE division…</option>
+          <option value="nace_01">01 Crop and animal production, hunting and related service activities</option>
+          <option value="nace_02">02 Forestry and logging</option>
+          <option value="nace_03">03 Fishing and aquaculture</option>
+          <option value="nace_05">05 Mining of coal and lignite</option>
+          <option value="nace_06">06 Extraction of crude petroleum and natural gas</option>
+          <option value="nace_07">07 Mining of metal ores</option>
+          <option value="nace_08">08 Other mining and quarrying</option>
+          <option value="nace_09">09 Mining support service activities</option>
+          <option value="nace_10">10 Manufacture of food products</option>
+          <option value="nace_11">11 Manufacture of beverages</option>
+          <option value="nace_12">12 Manufacture of tobacco products</option>
+          <option value="nace_13">13 Manufacture of textiles</option>
+          <option value="nace_14">14 Manufacture of wearing apparel</option>
+          <option value="nace_15">15 Manufacture of leather and related products of other materials</option>
+          <option value="nace_16">16 Manufacture of wood and of products of wood and cork, except furniture; manufacture of articles of straw and plaiting materials</option>
+          <option value="nace_17">17 Manufacture of paper and paper products</option>
+          <option value="nace_18">18 Printing and reproduction of recorded media</option>
+          <option value="nace_19">19 Manufacture of coke and refined petroleum products</option>
+          <option value="nace_20">20 Manufacture of chemicals and chemical products</option>
+          <option value="nace_21">21 Manufacture of basic pharmaceutical products and pharmaceutical preparations</option>
+          <option value="nace_22">22 Manufacture of rubber and plastic products</option>
+          <option value="nace_23">23 Manufacture of other non-metallic mineral products</option>
+          <option value="nace_24">24 Manufacture of basic metals</option>
+          <option value="nace_25">25 Manufacture of fabricated metal products, except machinery and equipment</option>
+          <option value="nace_26">26 Manufacture of computer, electronic and optical products</option>
+          <option value="nace_27">27 Manufacture of electrical equipment</option>
+          <option value="nace_28">28 Manufacture of machinery and equipment n.e.c.</option>
+          <option value="nace_29">29 Manufacture of motor vehicles, trailers and semi-trailers</option>
+          <option value="nace_30">30 Manufacture of other transport equipment</option>
+          <option value="nace_31">31 Manufacture of furniture</option>
+          <option value="nace_32">32 Other manufacturing</option>
+          <option value="nace_33">33 Repair, maintenance and installation of machinery and equipment</option>
+          <option value="nace_35">35 Electricity, gas, steam and air conditioning supply</option>
+          <option value="nace_36">36 Water collection, treatment and supply</option>
+          <option value="nace_37">37 Sewerage</option>
+          <option value="nace_38">38 Waste collection, recovery and disposal activities</option>
+          <option value="nace_39">39 Remediation activities and other waste management service activities</option>
+          <option value="nace_41">41 Construction of residential and non-residential buildings</option>
+          <option value="nace_42">42 Civil engineering</option>
+          <option value="nace_43">43 Specialised construction activities</option>
+          <option value="nace_46">46 Wholesale trade</option>
+          <option value="nace_47">47 Retail trade</option>
+          <option value="nace_49">49 Land transport and transport via pipelines</option>
+          <option value="nace_50">50 Water transport</option>
+          <option value="nace_51">51 Air transport</option>
+          <option value="nace_52">52 Warehousing, storage and support activities for transportation</option>
+          <option value="nace_53">53 Postal and courier activities</option>
+          <option value="nace_55">55 Accommodation</option>
+          <option value="nace_56">56 Food and beverage service activities</option>
+          <option value="nace_58">58 Publishing activities</option>
+          <option value="nace_59">59 Motion picture, video and television programme production, sound recording and music publishing activities</option>
+          <option value="nace_60">60 Programming, broadcasting, news agency and other content distribution activities</option>
+          <option value="nace_61">61 Telecommunication</option>
+          <option value="nace_62">62 Computer programming, consultancy and related activities</option>
+          <option value="nace_63">63 Computing infrastructure, data processing, hosting and other information service activities</option>
+          <option value="nace_64">64 Financial service activities, except insurance and pension funding</option>
+          <option value="nace_65">65 Insurance, reinsurance and pension funding, except compulsory social security</option>
+          <option value="nace_66">66 Activities auxiliary to financial services and insurance activities</option>
+          <option value="nace_68">68 Real estate activities</option>
+          <option value="nace_69">69 Legal and accounting activities</option>
+          <option value="nace_70">70 Activities of head offices and management consultancy</option>
+          <option value="nace_71">71 Architectural and engineering activities; technical testing and analysis</option>
+          <option value="nace_72">72 Scientific research and development</option>
+          <option value="nace_73">73 Activities of advertising, market research and public relations</option>
+          <option value="nace_74">74 Other professional, scientific and technical activities</option>
+          <option value="nace_75">75 Veterinary activities</option>
+          <option value="nace_77">77 Rental and leasing activities</option>
+          <option value="nace_78">78 Employment activities</option>
+          <option value="nace_79">79 Travel agency, tour operator and other reservation service and related activities</option>
+          <option value="nace_80">80 Investigation and security activities</option>
+          <option value="nace_81">81 Services to buildings and landscape activities</option>
+          <option value="nace_82">82 Office administrative, office support and other business support activities</option>
+          <option value="nace_84">84 Public administration and defence; compulsory social security</option>
+          <option value="nace_85">85 Education</option>
+          <option value="nace_86">86 Human health activities</option>
+          <option value="nace_87">87 Residential care activities</option>
+          <option value="nace_88">88 Social work activities without accommodation</option>
+          <option value="nace_90">90 Arts creation and performing arts activities</option>
+          <option value="nace_91">91 Libraries, archives, museums and other cultural activities</option>
+          <option value="nace_92">92 Gambling and betting activities</option>
+          <option value="nace_93">93 Sports activities and amusement and recreation activities</option>
+          <option value="nace_94">94 Activities of membership organisations</option>
+          <option value="nace_95">95 Repair and maintenance of computers, personal and household goods, and motor vehicles and motorcycles</option>
+          <option value="nace_96">96 Personal service activities</option>
+          <option value="nace_97">97 Activities of households as employers of domestic personnel</option>
+          <option value="nace_98">98 Undifferentiated goods- and service-producing activities of private households for own use</option>
+          <option value="nace_99">99 Activities of extraterritorial organisations and bodies</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row full">
+      <div><label>Brief description of your business idea</label>
+        <textarea id="description" rows="3" placeholder="Describe your startup idea in a few sentences…"></textarea>
+      </div>
+    </div>
+    <div class="form-row">
+      <div><label>Is it a product or a service?</label>
+        <select id="prodservice"><option value="">Select…</option><option>Product</option><option>Service</option><option>Both</option></select>
+      </div>
+      <div><label>Is it already launched?</label>
+        <select id="launched"><option value="">Select…</option><option>Yes</option><option>No</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div><label>Current stage</label>
+        <select id="stage">
+          <option value="">Select stage…</option>
+          <option value="1">01 – Ideation Stage</option>
+          <option value="2">02 – Validation Stage</option>
+          <option value="3">03 – Prototype / MVP</option>
+          <option value="4">04 – Pre-Launch</option>
+          <option value="5">05 – Launch / Early Commercial</option>
+          <option value="6">06 – Product-Market Fit</option>
+          <option value="7">07 – Growth & Channel Fit</option>
+          <option value="8">08 – Revenue Validation</option>
+          <option value="9">09 – Operational Foundation</option>
+          <option value="10">10 – Early Scale / Fundraising</option>
+        </select>
+      </div>
+      <div><label>Approach of innovation</label>
+        <select id="approach">
+          <option value="">Select…</option>
+          <option value="sustaining">Sustaining Innovation – improving existing solutions</option>
+          <option value="disruptive">Disruptive Innovation – creating something entirely new</option>
+        </select>
+      </div>
+    </div>
+        <div id="subcat-wrap" style="visibility:hidden;margin-bottom:.85rem">
+      <div style="max-width:50%">
+        <label>Subcategory <span style="font-weight:400;color:var(--text3)">(optional)</span></label>
+        <select id="bizcat_sub">
+          <option value="">Select subcategory…</option>
+        </select>
+      </div>
+    </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-icon blue">🌍</div><div><h2>SDG alignment</h2><div class="card-sub">UN Sustainable Development Goals relevant to your startup</div></div></div>
+    <div id="sdg-grid" class="sdg-grid"></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-outline" onclick="goTo(2)">← Back</button>
+    <button class="btn btn-primary" onclick="goTo(4)">Insights & Recommendations →</button>
+  </div>
+</div>
+
+<!-- PAGE 4: Insights -->
+<div class="page" id="p4">
+
+  <div class="card">
+    <h2>Sustainability Maturity Score</h2>
+    <div style="display:flex;align-items:center;gap:2rem;flex-wrap:wrap">
+      <div style="text-align:center">
+        <div id="maturity-score" style="font-size:3.5rem;font-weight:700;color:#1a4a2e">–</div>
+        <div style="font-size:.8rem;color:#777">out of 100</div>
+        <div id="maturity-label" style="margin-top:.5rem;font-size:.9rem;font-weight:600;color:#1a4a2e"></div>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div id="maturity-bar-wrap" style="background:#e8e8e8;border-radius:20px;height:18px;overflow:hidden;margin-bottom:.5rem">
+          <div id="maturity-bar" style="height:100%;border-radius:20px;background:#1a4a2e;width:0%;transition:width .8s ease"></div>
+        </div>
+        <div id="maturity-desc" style="font-size:.82rem;color:#555;line-height:1.6"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Automatic Recommendations</h2>
+    <div id="auto-recommendations" style="font-size:.88rem;line-height:1.8;color:#333"></div>
+  </div>
+
+  <div class="card">
+    <h2>What-If Simulator</h2>
+    <p style="font-size:.82rem;color:#555;margin-bottom:1rem">Adjust the sliders to see how improving each area would change your maturity score.</p>
+    <div id="simulator-controls"></div>
+    <div style="margin-top:1rem;padding:1rem;background:#f0f7f2;border-radius:8px;text-align:center">
+      <div style="font-size:.8rem;color:#555;margin-bottom:.3rem">Simulated maturity score</div>
+      <div id="sim-score" style="font-size:2rem;font-weight:700;color:#1a4a2e">–</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Action Plan</h2>
+    <p style="font-size:.82rem;color:#555;margin-bottom:1rem">Priority actions ordered by urgency based on your scores.</p>
+    <div id="action-plan"></div>
+  </div>
+
+  <div class="card">
+    <h2>Sustainability Roadmap</h2>
+    <p style="font-size:.82rem;color:#555;margin-bottom:1rem">Suggested milestones for the next 12 months.</p>
+    <div id="roadmap"></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-outline" onclick="goTo(3)">← Back</button>
+    <button class="btn btn-primary" onclick="goTo(5)">Export Report →</button>
+  </div>
+</div>
+
+<!-- PAGE 5: Export -->
+<div class="page" id="p5">
+  <div class="card">
+    <div class="card-header"><div class="card-icon green">💾</div><div><h2>Save & Export</h2><div class="card-sub">Save to database or download</div></div></div>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem">
+      <button class="btn btn-primary" onclick="saveEvaluation()">💾 Save to Database</button>
+      <button class="btn btn-outline" onclick="exportCSV()">📥 Download CSV</button>
+      <button class="btn btn-outline" onclick="printReport()">🖨️ Save as PDF</button>
+    </div>
+    <div id="save-status" style="font-size:.82rem;color:#1a5c34;display:none"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-icon blue">📂</div><div><h2>Saved evaluations</h2><div class="card-sub">Previously saved evaluations</div></div></div>
+    <div id="saved-list">
+      <p style="font-size:.85rem;color:#777">Loading…</p>
+    </div>
+  </div>
+  <div class="card" id="report-preview">
+    <h2>Report preview</h2>
+    <div id="report-content" style="font-size:.88rem;line-height:1.8;color:#333"></div>
+  </div>
+</div>
+
+<script>
+const PAGES = ['p0','p1','p2','p3','p4','p5'];
+let currentPage = 0;
+let stage1Scores = {};
+let stage2Scores = {};
+let allSDGs = [];
+
+// ── Data definitions ──────────────────────────────────────────
+
+const MAGNITUDE_MAP = {'Low':1,'Moderate':2,'Significant':3,'High':4,'N/A':0};
+const LIKELIHOOD_MAP = {'Very unlikely':0.25,'Unlikely':0.5,'Likely':0.75,'Very likely':1,'N/A':0};
+const RISK_PROB_MAP = {'Very likely':1,'Likely':0.75,'Could occur':0.5,'Rare':0.25,'N/A':0};
+const RISK_IMPACT_MAP = {'High':4,'Significant':3,'Moderate':2,'Low':1,'N/A':0};
+const RISK_RATING = {1:'Sustainable',2:'Moderate',3:'Severe',4:'Critical',0:'Neutral'};
+const OPP_RATING = {1:'Small',2:'Reasonable',3:'Sustainable',4:'Great',0:'Neutral'};
+
+const FINANCIAL_CRITERIA = [
+  {name:'Economic KPIs (ROI, IRR, NPV & Payback Period)', options:['Not Evaluated','Below Industry Average','Average / No Benchmark','Above Industry Average']},
+  {name:'Sensitivity Analysis (Robustness)', options:['Not Evaluated','High Volatility / Large Sensitivity','Moderate Volatility','Low Volatility / Stable']},
+  {name:'USP / Strategic Fit (Positioning)', options:['Not Evaluated','No USP','Weak / Moderate USP','Strong / Unique USP']},
+  {name:'Market Growth', options:['Not Evaluated','Shrinking','Mature','Growing']},
+];
+
+const ENV_CRITERIA = [
+  {name:'Water', question:'Do we threaten local ecosystems through water withdrawal?'},
+  {name:'Pollution', question:'Do our processes cause significant environmental pollution?'},
+  {name:'Biodiversity', question:'Do our activities destroy ecosystems or biodiversity?'},
+  {name:'Circular Economy', question:'How intensive is our use of resources and waste production?'},
+  {name:'Climate Change', question:'How much do our activities contribute to global warming?'},
+];
+
+const SOCIAL_CRITERIA = [
+  {name:'Own Workforce (S1)', question:'Do our practices violate employee rights?'},
+  {name:'Supply Chain (S2)', question:'Are there risks of labor violations in our value chain?'},
+  {name:'Communities (S3)', question:'Do our actions impact local communities negatively?'},
+  {name:'Consumers (S4)', question:'Do our products or services harm consumer rights?'},
+  {name:'Corporate Ethics (G1)', question:'Do poor standards cause ethical violations in our company?'},
+];
+
+const GOV_CRITERIA = [
+  {name:'Consumers & Governance (S4,G1)', question:'What is the probability that evolving consumer protection and AI/advertising regulations will trigger complaints, fines, or loss of market access?'},
+];
+
+const RISKS = [
+  {cat:'Climate (E1,E2)', name:'What financial risks arise from stricter climate policy or penalties for environmental harm?'},
+  {cat:'Water/Biodiversity (E3,E4)', name:'How does water scarcity affect our operations?'},
+  {cat:'Water/Biodiversity (E3,E4)', name:'What constraints do biodiversity regulations create?'},
+  {cat:'Circular Economy (E5)', name:'How does resource scarcity affect our business model?'},
+  {cat:'Communities (S3)', name:'What social risks affect our site stability?'},
+  {cat:'Consumers & Governance (S4,G1)', name:'What is the probability that evolving consumer protection regulations will trigger complaints or fines?'},
+];
+
+const OPPS = [
+  {cat:'Climate (E1,E2)', name:'How can we benefit from the transition to climate neutrality and low-emission solutions?'},
+  {cat:'Water/Biodiversity (E3,E4)', name:'Can we gain image benefits from water-saving processes?'},
+  {cat:'Water/Biodiversity (E3,E4)', name:'Can biodiversity action improve our reputation?'},
+  {cat:'Circular Economy (E5)', name:'Can circular practices strengthen our brand and efficiency?'},
+  {cat:'Communities (S3)', name:'Do we use community investment to improve our reputation?'},
+  {cat:'Consumers & Governance (S4,G1)', name:'How can stronger governance build consumer trust and unlock premium pricing?'},
+];
+
+const SDG_BY_CATEGORY = {
+  nace_01: [2, 12, 13, 15],
+  nace_02: [12, 13, 15],
+  nace_03: [2, 12, 14],
+  nace_05: [8, 12, 13, 15],
+  nace_06: [7, 12, 13],
+  nace_07: [8, 12, 13],
+  nace_08: [8, 12, 13],
+  nace_09: [8, 12, 13],
+  nace_10: [2, 3, 12],
+  nace_11: [3, 12],
+  nace_12: [3, 12],
+  nace_13: [8, 12],
+  nace_14: [8, 12],
+  nace_15: [8, 12],
+  nace_16: [8, 12, 13, 15],
+  nace_17: [8, 12, 13, 15],
+  nace_18: [12],
+  nace_19: [7, 12, 13],
+  nace_20: [3, 12, 13],
+  nace_21: [3, 9, 12],
+  nace_22: [12, 13],
+  nace_23: [12, 13],
+  nace_24: [8, 12],
+  nace_25: [8, 12],
+  nace_26: [9, 12],
+  nace_27: [9, 12],
+  nace_28: [9, 12],
+  nace_29: [9, 11, 13],
+  nace_30: [9, 11, 13],
+  nace_31: [12],
+  nace_32: [12],
+  nace_33: [9, 12],
+  nace_35: [7, 13],
+  nace_36: [6, 12],
+  nace_37: [6, 12],
+  nace_38: [11, 12, 13],
+  nace_39: [6, 12, 13, 15],
+  nace_41: [9, 11, 12],
+  nace_42: [9, 11],
+  nace_43: [9, 11],
+  nace_46: [8, 12],
+  nace_47: [8, 12],
+  nace_49: [9, 11, 13],
+  nace_50: [9, 13, 14],
+  nace_51: [9, 13],
+  nace_52: [9, 12],
+  nace_53: [9],
+  nace_55: [8, 12],
+  nace_56: [3, 8, 12],
+  nace_58: [4, 9, 16],
+  nace_59: [4, 5, 16],
+  nace_60: [4, 9, 16],
+  nace_61: [9, 17],
+  nace_62: [8, 9],
+  nace_63: [9, 12],
+  nace_64: [8, 9, 10],
+  nace_65: [1, 8],
+  nace_66: [8, 10],
+  nace_68: [11, 12, 13],
+  nace_69: [16],
+  nace_70: [8, 9, 12],
+  nace_71: [9, 11, 13],
+  nace_72: [9, 17],
+  nace_73: [12, 16],
+  nace_74: [8, 9],
+  nace_75: [3, 15],
+  nace_77: [11, 12],
+  nace_78: [8, 10],
+  nace_79: [8, 12],
+  nace_80: [16],
+  nace_81: [11, 13, 15],
+  nace_82: [8],
+  nace_84: [16],
+  nace_85: [4],
+  nace_86: [3],
+  nace_87: [3, 10],
+  nace_88: [1, 3, 10],
+  nace_90: [4, 11],
+  nace_91: [4, 11],
+  nace_92: [3, 16],
+  nace_93: [3, 11],
+  nace_94: [16, 17],
+  nace_95: [12],
+  nace_96: [8],
+  nace_97: [8],
+  nace_98: [12],
+  nace_99: [17]
+};
+
+const NACE_SUBCATS = {
+  nace_01: [{code:'01.1',name:'01.1 Growing of non-perennial crops'}, {code:'01.2',name:'01.2 Growing of perennial crops'}, {code:'01.3',name:'01.3 Plant propagation'}, {code:'01.4',name:'01.4 Animal production'}, {code:'01.5',name:'01.5 Mixed farming'}, {code:'01.6',name:'01.6 Support activities to agriculture and post-harvest crop activities'}, {code:'01.7',name:'01.7 Hunting, trapping and related service activities'}],
+  nace_02: [{code:'02.1',name:'02.1 Silviculture and other forestry activities'}, {code:'02.2',name:'02.2 Logging'}, {code:'02.3',name:'02.3 Gathering of wild growing non-wood products'}, {code:'02.4',name:'02.4 Support services to forestry'}],
+  nace_03: [{code:'03.1',name:'03.1 Fishing'}, {code:'03.2',name:'03.2 Aquaculture'}, {code:'03.3',name:'03.3 Support activities for fishing and aquaculture'}],
+  nace_05: [{code:'05.1',name:'05.1 Mining of hard coal'}, {code:'05.2',name:'05.2 Mining of lignite'}],
+  nace_06: [{code:'06.1',name:'06.1 Extraction of crude petroleum'}, {code:'06.2',name:'06.2 Extraction of natural gas'}],
+  nace_07: [{code:'07.1',name:'07.1 Mining of iron ores'}, {code:'07.2',name:'07.2 Mining of non-ferrous metal ores'}],
+  nace_08: [{code:'08.1',name:'08.1 Quarrying of stone, sand and clay'}, {code:'08.9',name:'08.9 Mining and quarrying n.e.c.'}],
+  nace_09: [{code:'09.1',name:'09.1 Support activities for petroleum and natural gas extraction'}, {code:'09.9',name:'09.9 Support activities for other mining and quarrying'}],
+  nace_10: [{code:'10.1',name:'10.1 Processing and preserving of meat and production of meat products'}, {code:'10.2',name:'10.2 Processing and preserving of fish, crustaceans and molluscs'}, {code:'10.3',name:'10.3 Processing and preserving of fruit and vegetables'}, {code:'10.4',name:'10.4 Manufacture of vegetable and animal oils and fats'}, {code:'10.5',name:'10.5 Manufacture of dairy products and edible ice'}, {code:'10.6',name:'10.6 Manufacture of grain mill products, starches and starch products'}, {code:'10.7',name:'10.7 Manufacture of bakery and farinaceous products'}, {code:'10.8',name:'10.8 Manufacture of other food products'}, {code:'10.9',name:'10.9 Manufacture of prepared animal feeds'}],
+  nace_11: [{code:'11.0',name:'11.0 Manufacture of beverages'}],
+  nace_12: [{code:'12.0',name:'12.0 Manufacture of tobacco products'}],
+  nace_13: [{code:'13.1',name:'13.1 Preparation and spinning of textile fibres'}, {code:'13.2',name:'13.2 Weaving of textiles'}, {code:'13.3',name:'13.3 Finishing of textiles'}, {code:'13.9',name:'13.9 Manufacture of other textiles'}],
+  nace_14: [{code:'14.1',name:'14.1 Manufacture of knitted and crocheted apparel'}, {code:'14.2',name:'14.2 Manufacture of other wearing apparel and accessories'}],
+  nace_15: [{code:'15.1',name:'15.1 Tanning, dyeing, dressing of leather and fur; manufacture of luggage, handbags, saddlery and harness'}, {code:'15.2',name:'15.2 Manufacture of footwear'}],
+  nace_16: [{code:'16.1',name:'16.1 Sawmilling and planing of wood; processing and finishing of wood'}, {code:'16.2',name:'16.2 Manufacture of products of wood, cork, straw and plaiting materials'}],
+  nace_17: [{code:'17.1',name:'17.1 Manufacture of pulp, paper and paperboard'}, {code:'17.2',name:'17.2 Manufacture of articles of paper and paperboard'}],
+  nace_18: [{code:'18.1',name:'18.1 Printing and service activities related to printing'}, {code:'18.2',name:'18.2 Reproduction of recorded media'}],
+  nace_19: [{code:'19.1',name:'19.1 Manufacture of coke oven products'}, {code:'19.2',name:'19.2 Manufacture of refined petroleum products and fossil fuel products'}],
+  nace_20: [{code:'20.1',name:'20.1 Manufacture of basic chemicals, fertilisers and nitrogen compounds, plastics and synthetic rubber in primary forms'}, {code:'20.2',name:'20.2 Manufacture of pesticides, disinfectants and other agrochemical products'}, {code:'20.3',name:'20.3 Manufacture of paints, varnishes and similar coatings, printing ink and mastics'}, {code:'20.4',name:'20.4 Manufacture of washing, cleaning and polishing preparations'}, {code:'20.5',name:'20.5 Manufacture of other chemical products'}, {code:'20.6',name:'20.6 Manufacture of man-made fibres'}],
+  nace_21: [{code:'21.1',name:'21.1 Manufacture of basic pharmaceutical products'}, {code:'21.2',name:'21.2 Manufacture of pharmaceutical preparations'}],
+  nace_22: [{code:'22.1',name:'22.1 Manufacture of rubber products'}, {code:'22.2',name:'22.2 Manufacture of plastic products'}],
+  nace_23: [{code:'23.1',name:'23.1 Manufacture of glass and glass products'}, {code:'23.2',name:'23.2 Manufacture of refractory products'}, {code:'23.3',name:'23.3 Manufacture of clay building materials'}, {code:'23.4',name:'23.4 Manufacture of other porcelain and ceramic products'}, {code:'23.5',name:'23.5 Manufacture of cement, lime and plaster'}, {code:'23.6',name:'23.6 Manufacture of articles of concrete, cement and plaster'}, {code:'23.7',name:'23.7 Cutting, shaping and finishing of stone'}, {code:'23.9',name:'23.9 Manufacture of abrasive products and non-metallic mineral products n.e.c.'}],
+  nace_24: [{code:'24.1',name:'24.1 Manufacture of basic iron and steel and of ferro-alloys'}, {code:'24.2',name:'24.2 Manufacture of tubes, pipes, hollow profiles and related fittings, of steel'}, {code:'24.3',name:'24.3 Manufacture of other products of first processing of steel'}, {code:'24.4',name:'24.4 Manufacture of basic precious and other non-ferrous metals'}, {code:'24.5',name:'24.5 Casting of metals'}],
+  nace_25: [{code:'25.1',name:'25.1 Manufacture of structural metal products'}, {code:'25.2',name:'25.2 Manufacture of tanks, reservoirs and containers of metal'}, {code:'25.3',name:'25.3 Manufacture of weapons and ammunition'}, {code:'25.4',name:'25.4 Forging and shaping metal and powder metallurgy'}, {code:'25.5',name:'25.5 Treatment and coating of metals; machining'}, {code:'25.6',name:'25.6 Manufacture of cutlery, tools and general hardware'}, {code:'25.9',name:'25.9 Manufacture of other fabricated metal products'}],
+  nace_26: [{code:'26.1',name:'26.1 Manufacture of electronic components and boards'}, {code:'26.2',name:'26.2 Manufacture of computers and peripheral equipment'}, {code:'26.3',name:'26.3 Manufacture of communication equipment'}, {code:'26.4',name:'26.4 Manufacture of consumer electronics'}, {code:'26.5',name:'26.5 Manufacture of measuring testing instruments, clocks and watches'}, {code:'26.6',name:'26.6 Manufacture of irradiation, electromedical and electrotherapeutic equipment'}, {code:'26.7',name:'26.7 Manufacture of optical instruments, magnetic and optical media and photographic equipment'}],
+  nace_27: [{code:'27.1',name:'27.1 Manufacture of electric motors, generators, transformers and electricity distribution and control apparatus'}, {code:'27.2',name:'27.2 Manufacture of batteries and accumulators'}, {code:'27.3',name:'27.3 Manufacture of wiring and wiring devices'}, {code:'27.4',name:'27.4 Manufacture of lighting equipment'}, {code:'27.5',name:'27.5 Manufacture of domestic appliances'}, {code:'27.9',name:'27.9 Manufacture of other electrical equipment'}],
+  nace_28: [{code:'28.1',name:'28.1 Manufacture of general-purpose machinery'}, {code:'28.2',name:'28.2 Manufacture of other general-purpose machinery'}, {code:'28.3',name:'28.3 Manufacture of agricultural and forestry machinery'}, {code:'28.4',name:'28.4 Manufacture of metal forming machinery and machine tools'}, {code:'28.9',name:'28.9 Manufacture of other special-purpose machinery'}],
+  nace_29: [{code:'29.1',name:'29.1 Manufacture of motor vehicles'}, {code:'29.2',name:'29.2 Manufacture of bodies and coachwork for motor vehicles; manufacture of trailers and semi-trailers'}, {code:'29.3',name:'29.3 Manufacture of motor vehicle parts and accessories'}],
+  nace_30: [{code:'30.1',name:'30.1 Building of ships and boats'}, {code:'30.2',name:'30.2 Manufacture of railway locomotives and rolling stock'}, {code:'30.3',name:'30.3 Manufacture of air and spacecraft and related machinery'}, {code:'30.4',name:'30.4 Manufacture of military fighting vehicles'}, {code:'30.9',name:'30.9 Manufacture of transport equipment n.e.c.'}],
+  nace_31: [{code:'31.0',name:'31.0 Manufacture of furniture'}],
+  nace_32: [{code:'32.1',name:'32.1 Manufacture of jewellery, bijouterie and related articles'}, {code:'32.2',name:'32.2 Manufacture of musical instruments'}, {code:'32.3',name:'32.3 Manufacture of sports goods'}, {code:'32.4',name:'32.4 Manufacture of games and toys'}, {code:'32.5',name:'32.5 Manufacture of medical and dental instruments and supplies'}, {code:'32.9',name:'32.9 Manufacturing n.e.c.'}],
+  nace_33: [{code:'33.1',name:'33.1 Repair and maintenance of fabricated metal products, machinery and equipment'}, {code:'33.2',name:'33.2 Installation of industrial machinery and equipment'}],
+  nace_35: [{code:'35.1',name:'35.1 Electric power generation, transmission and distribution'}, {code:'35.2',name:'35.2 Manufacture of gas, and distribution of gaseous fuels through mains'}, {code:'35.3',name:'35.3 Steam and air conditioning supply'}, {code:'35.4',name:'35.4 Activities of brokers and agents for electric power and natural gas'}],
+  nace_36: [{code:'36.0',name:'36.0 Water collection, treatment and supply'}],
+  nace_37: [{code:'37.0',name:'37.0 Sewerage'}],
+  nace_38: [{code:'38.1',name:'38.1 Waste collection'}, {code:'38.2',name:'38.2 Waste recovery'}, {code:'38.3',name:'38.3 Waste disposal without recovery'}],
+  nace_39: [{code:'39.0',name:'39.0 Remediation activities and other waste management service activities'}],
+  nace_41: [{code:'41.0',name:'41.0 Construction of residential and non-residential buildings'}],
+  nace_42: [{code:'42.1',name:'42.1 Construction of roads and railways'}, {code:'42.2',name:'42.2 Construction of utility projects'}, {code:'42.9',name:'42.9 Construction of other civil engineering projects'}],
+  nace_43: [{code:'43.1',name:'43.1 Demolition and site preparation'}, {code:'43.2',name:'43.2 Electrical, plumbing and other construction installation activities'}, {code:'43.3',name:'43.3 Building completion and finishing'}, {code:'43.4',name:'43.4 Specialised construction activities in construction of buildings'}, {code:'43.5',name:'43.5 Specialised construction activities in civil engineering'}, {code:'43.6',name:'43.6 Intermediation service activities for specialised construction services'}, {code:'43.9',name:'43.9 Other specialised construction activities'}],
+  nace_46: [{code:'46.1',name:'46.1 Wholesale on a fee or contract basis'}, {code:'46.2',name:'46.2 Wholesale of agricultural raw materials and live animals'}, {code:'46.3',name:'46.3 Wholesale of food, beverages and tobacco'}, {code:'46.4',name:'46.4 Wholesale of household goods'}, {code:'46.5',name:'46.5 Wholesale of information and communication equipment'}, {code:'46.6',name:'46.6 Wholesale of other machinery, equipment and supplies'}, {code:'46.7',name:'46.7 Wholesale of motor vehicles, motorcycles and related parts and accessories'}, {code:'46.8',name:'46.8 Other specialised wholesale'}, {code:'46.9',name:'46.9 Non-specialised wholesale trade'}],
+  nace_47: [{code:'47.1',name:'47.1 Non-specialised retail sale'}, {code:'47.2',name:'47.2 Retail sale of food, beverages and tobacco'}, {code:'47.3',name:'47.3 Retail sale of automotive fuel'}, {code:'47.4',name:'47.4 Retail sale of information and communication equipment'}, {code:'47.5',name:'47.5 Retail sale of other household equipment'}, {code:'47.6',name:'47.6 Retail sale of cultural and recreational goods'}, {code:'47.7',name:'47.7 Retail sale of other goods, except motor vehicles and motorcycles'}, {code:'47.8',name:'47.8 Retail sale of motor vehicles, motorcycles and related parts and accessories'}, {code:'47.9',name:'47.9 Intermediation service activities for retail sale'}],
+  nace_49: [{code:'49.1',name:'49.1 Passenger rail transport'}, {code:'49.2',name:'49.2 Freight rail transport'}, {code:'49.3',name:'49.3 Other passenger land transport'}, {code:'49.4',name:'49.4 Freight transport by road and removal services'}, {code:'49.5',name:'49.5 Transport via pipeline'}],
+  nace_50: [{code:'50.1',name:'50.1 Sea and coastal passenger water transport'}, {code:'50.2',name:'50.2 Sea and coastal freight water transport'}, {code:'50.3',name:'50.3 Inland passenger water transport'}, {code:'50.4',name:'50.4 Inland freight water transport'}],
+  nace_51: [{code:'51.1',name:'51.1 Passenger air transport'}, {code:'51.2',name:'51.2 Freight air transport and space transport'}],
+  nace_52: [{code:'52.1',name:'52.1 Warehousing and storage'}, {code:'52.2',name:'52.2 Support activities for transportation'}, {code:'52.3',name:'52.3 Intermediation service activities for transportation'}],
+  nace_53: [{code:'53.1',name:'53.1 Postal activities under universal service obligation'}, {code:'53.2',name:'53.2 Other postal and courier activities'}, {code:'53.3',name:'53.3 Intermediation service activities for postal and courier activities'}],
+  nace_55: [{code:'55.1',name:'55.1 Hotels and similar accommodation'}, {code:'55.2',name:'55.2 Holiday and other short-stay accommodation'}, {code:'55.3',name:'55.3 Camping grounds and recreational vehicle parks'}, {code:'55.4',name:'55.4 Intermediation service activities for accommodation'}, {code:'55.9',name:'55.9 Other accommodation'}],
+  nace_56: [{code:'56.1',name:'56.1 Restaurants and mobile food service activities'}, {code:'56.2',name:'56.2 Event catering, contract catering service activities and other food service activities'}, {code:'56.3',name:'56.3 Beverage serving activities'}, {code:'56.4',name:'56.4 Intermediation service activities for food and beverage services activities'}],
+  nace_58: [{code:'58.1',name:'58.1 Publishing of books, newspapers and other publishing activities, except software publishing'}, {code:'58.2',name:'58.2 Software publishing'}],
+  nace_59: [{code:'59.1',name:'59.1 Motion picture, video and television programme activities'}, {code:'59.2',name:'59.2 Sound recording and music publishing activities'}],
+  nace_60: [{code:'60.1',name:'60.1 Radio broadcasting and audio distribution activities'}, {code:'60.2',name:'60.2 Television programming, broadcasting and video distribution activities'}, {code:'60.3',name:'60.3 News agency and other content distribution activities'}],
+  nace_61: [{code:'61.1',name:'61.1 Wired, wireless, and satellite telecommunication activities'}, {code:'61.2',name:'61.2 Telecommunication reselling activities and intermediation service activities for telecommunication'}, {code:'61.9',name:'61.9 Other telecommunication activities'}],
+  nace_62: [{code:'62.1',name:'62.1 Computer programming activities'}, {code:'62.2',name:'62.2 Computer consultancy and computer facilities management activities'}, {code:'62.9',name:'62.9 Other information technology and computer service activities'}],
+  nace_63: [{code:'63.1',name:'63.1 Computing infrastructure, data processing, hosting and related activities'}, {code:'63.9',name:'63.9 Web search portal activities and other information service activities'}],
+  nace_64: [{code:'64.1',name:'64.1 Monetary intermediation'}, {code:'64.2',name:'64.2 Activities of holding companies and financing conduits'}, {code:'64.3',name:'64.3 Activities of trusts, funds and similar financial entities'}, {code:'64.9',name:'64.9 Other financial service activities, except insurance and pension funding'}],
+  nace_65: [{code:'65.1',name:'65.1 Insurance'}, {code:'65.2',name:'65.2 Reinsurance'}, {code:'65.3',name:'65.3 Pension funding'}],
+  nace_66: [{code:'66.1',name:'66.1 Activities auxiliary to financial services, except insurance and pension funding'}, {code:'66.2',name:'66.2 Activities auxiliary to insurance and pension funding'}, {code:'66.3',name:'66.3 Fund management activities'}],
+  nace_68: [{code:'68.1',name:'68.1 Real estate activities with own property and development of building projects'}, {code:'68.2',name:'68.2 Rental and operating of own or leased real estate'}, {code:'68.3',name:'68.3 Real estate activities on a fee or contract basis'}],
+  nace_69: [{code:'69.1',name:'69.1 Legal activities'}, {code:'69.2',name:'69.2 Accounting, bookkeeping and auditing activities; tax consultancy'}],
+  nace_70: [{code:'70.1',name:'70.1 Activities of head offices'}, {code:'70.2',name:'70.2 Business and other management consultancy activities'}],
+  nace_71: [{code:'71.1',name:'71.1 Architectural and engineering activities and related technical consultancy'}, {code:'71.2',name:'71.2 Technical testing and analysis'}],
+  nace_72: [{code:'72.1',name:'72.1 Research and experimental development on natural sciences and engineering'}, {code:'72.2',name:'72.2 Research and experimental development on social sciences and humanities'}],
+  nace_73: [{code:'73.1',name:'73.1 Advertising'}, {code:'73.2',name:'73.2 Market research and public opinion polling'}, {code:'73.3',name:'73.3 Public relations and communication activities'}],
+  nace_74: [{code:'74.1',name:'74.1 Specialised design activities'}, {code:'74.2',name:'74.2 Photographic activities'}, {code:'74.3',name:'74.3 Translation and interpretation activities'}, {code:'74.9',name:'74.9 Other professional, scientific and technical activities n.e.c.'}],
+  nace_75: [{code:'75.0',name:'75.0 Veterinary activities'}],
+  nace_77: [{code:'77.1',name:'77.1 Rental and leasing of motor vehicles'}, {code:'77.2',name:'77.2 Rental and leasing of personal and household goods'}, {code:'77.3',name:'77.3 Rental and leasing of other machinery, equipment and tangible goods'}, {code:'77.4',name:'77.4 Leasing of intellectual property and similar products, except copyrighted works'}, {code:'77.5',name:'77.5 Intermediation service activities for rental and leasing of tangible goods and non-financial intangible assets'}],
+  nace_78: [{code:'78.1',name:'78.1 Activities of employment placement agencies'}, {code:'78.2',name:'78.2 Temporary employment agency activities and other human resource provisions'}],
+  nace_79: [{code:'79.1',name:'79.1 Travel agency and tour operator activities'}, {code:'79.9',name:'79.9 Other reservation service and related activities'}],
+  nace_80: [{code:'80.0',name:'80.0 Investigation and security activities'}],
+  nace_81: [{code:'81.1',name:'81.1 Combined facilities support activities'}, {code:'81.2',name:'81.2 Cleaning activities'}, {code:'81.3',name:'81.3 Landscape service activities'}],
+  nace_82: [{code:'82.1',name:'82.1 Office administrative and support activities'}, {code:'82.2',name:'82.2 Activities of call centres'}, {code:'82.3',name:'82.3 Organisation of conventions and trade shows'}, {code:'82.4',name:'82.4 Intermediation service activities for business support service activities n.e.c.'}, {code:'82.9',name:'82.9 Business support service activities n.e.c.'}],
+  nace_84: [{code:'84.1',name:'84.1 Administration of the State and the economic, social and environmental policies of the community'}, {code:'84.2',name:'84.2 Provision of services to the community as a whole'}, {code:'84.3',name:'84.3 Compulsory social security activities'}],
+  nace_85: [{code:'85.1',name:'85.1 Pre-primary education'}, {code:'85.2',name:'85.2 Primary education'}, {code:'85.3',name:'85.3 Secondary and post-secondary non-tertiary education'}, {code:'85.4',name:'85.4 Tertiary education'}, {code:'85.5',name:'85.5 Other education'}, {code:'85.6',name:'85.6 Educational support activities'}],
+  nace_86: [{code:'86.1',name:'86.1 Hospital activities'}, {code:'86.2',name:'86.2 Medical and dental practice activities'}, {code:'86.9',name:'86.9 Other human health activities'}],
+  nace_87: [{code:'87.1',name:'87.1 Residential nursing care activities'}, {code:'87.2',name:'87.2 Residential care activities for persons living with or having a diagnosis of a mental illness or substance abuse'}, {code:'87.3',name:'87.3 Residential care activities for older persons or persons with physical disabilities'}, {code:'87.9',name:'87.9 Other residential care activities'}],
+  nace_88: [{code:'88.1',name:'88.1 Social work activities without accommodation for older persons or persons with disabilities'}, {code:'88.9',name:'88.9 Other social work activities without accommodation'}],
+  nace_90: [{code:'90.1',name:'90.1 Arts creation activities'}, {code:'90.2',name:'90.2 Activities of performing arts'}, {code:'90.3',name:'90.3 Support activities to arts creation and performing arts'}],
+  nace_91: [{code:'91.1',name:'91.1 Library and archive activities'}, {code:'91.2',name:'91.2 Museum, collection, historical site and monument activities'}, {code:'91.3',name:'91.3 Conservation, restoration and other support activities for cultural heritage'}, {code:'91.4',name:'91.4 Botanical and zoological garden and nature reserve activities'}],
+  nace_92: [{code:'92.0',name:'92.0 Gambling and betting activities'}],
+  nace_93: [{code:'93.1',name:'93.1 Sports activities'}, {code:'93.2',name:'93.2 Amusement and recreation activities'}],
+  nace_94: [{code:'94.1',name:'94.1 Activities of business, employers and professional membership organisations'}, {code:'94.2',name:'94.2 Activities of trade unions'}, {code:'94.9',name:'94.9 Activities of other membership organisations'}],
+  nace_95: [{code:'95.1',name:'95.1 Repair and maintenance of computers and communication equipment'}, {code:'95.2',name:'95.2 Repair and maintenance of personal and household goods'}, {code:'95.3',name:'95.3 Repair and maintenance of motor vehicles and motorcycles'}, {code:'95.4',name:'95.4 Intermediation service activities for repair and maintenance of computers, personal and household goods, and motor vehicles and motorcycles'}],
+  nace_96: [{code:'96.1',name:'96.1 Washing and cleaning of textile and fur products'}, {code:'96.2',name:'96.2 Hairdressing, beauty treatment, day spa and similar activities'}, {code:'96.3',name:'96.3 Funeral and related activities'}, {code:'96.4',name:'96.4 Intermediation service activities for personal services'}, {code:'96.9',name:'96.9 Other personal service activities'}],
+  nace_97: [{code:'97.0',name:'97.0 Activities of households as employers of domestic personnel'}],
+  nace_98: [{code:'98.1',name:'98.1 Undifferentiated goods-producing activities of private households for own use'}, {code:'98.2',name:'98.2 Undifferentiated service-producing activities of private households for own use'}],
+  nace_99: [{code:'99.0',name:'99.0 Activities of extraterritorial organisations and bodies'}]
+};
+
+const SDG_NAMES = {
+  1:'No Poverty',2:'Zero Hunger',3:'Good Health',4:'Quality Education',5:'Gender Equality',
+  6:'Clean Water',7:'Clean Energy',8:'Decent Work',9:'Industry',10:'Reduced Inequalities',
+  11:'Sustainable Cities',12:'Responsible Consumption',13:'Climate Action',14:'Life Below Water',
+  15:'Life on Land',16:'Peace & Justice',17:'Partnerships'
+};
+
+// ── Build UI ──────────────────────────────────────────────────
+
+function updateSubcats() {
+  const val = document.getElementById('bizcat').value;
+  const wrap = document.getElementById('subcat-wrap');
+  const sel = document.getElementById('bizcat_sub');
+  const groups = NACE_SUBCATS[val] || [];
+  wrap.style.visibility = groups.length ? 'visible' : 'hidden';
+  if(groups.length) {
+    sel.innerHTML = '<option value="">Select subcategory…</option>' +
+      groups.map(g => `<option value="${g.code}">${g.name}</option>`).join('');
+  }
+}
+
+function buildStage1UI() {
+  // Financial
+  const fin = document.getElementById('financial-items');
+  fin.innerHTML = '';
+  FINANCIAL_CRITERIA.forEach((c,i) => {
+    fin.innerHTML += `<div class="impact-item">
+      <p>${c.name}</p>
+      <div><label>Level</label>
+      <select id="fin_${i}" style="width:100%;font-size:.82rem">
+        ${c.options.map(o=>`<option value="${['Not Evaluated','Below Industry Average','Average / No Benchmark','Above Industry Average','Shrinking','Mature','Growing','High Volatility / Large Sensitivity','Moderate Volatility','Low Volatility / Stable','No USP','Weak / Moderate USP','Strong / Unique USP'].includes(o)?o:o}">${o}</option>`).join('')}
+      </select></div>
+    </div>`;
+  });
+
+  // Env
+  const env = document.getElementById('env-items');
+  env.innerHTML = '';
+  ENV_CRITERIA.forEach((c,i) => {
+    env.innerHTML += buildImpactItem('env',i,c);
+  });
+
+  // Social
+  const soc = document.getElementById('social-items');
+  soc.innerHTML = '';
+  SOCIAL_CRITERIA.forEach((c,i) => {
+    soc.innerHTML += buildImpactItem('soc',i,c);
+  });
+
+  // Gov
+  const gov = document.getElementById('gov-items');
+  gov.innerHTML = '';
+  GOV_CRITERIA.forEach((c,i) => {
+    gov.innerHTML += buildImpactItem('gov',i,c);
+  });
+}
+
+const MAG_OPTS  = ['N/A','Low','Moderate','Significant','High'];
+const LIKE_OPTS = ['N/A','Very unlikely','Unlikely','Likely','Very likely'];
+
+function buildImpactItem(prefix, i, c) {
+  return `<div class="impact-item">
+    <div class="impact-item-title">${c.name}</div>
+    <div class="impact-item-q">${c.question||''}</div>
+    <div class="selects">
+      <div>
+        <label>Magnitude <span class="tooltip-icon" data-tip="How severe is the impact if it occurs?">?</span></label>
+        <select id="${prefix}_mag_${i}"><option value="N/A">N/A</option><option>Low</option><option>Moderate</option><option>Significant</option><option>High</option></select>
+      </div>
+      <div>
+        <label>Scale <span class="tooltip-icon" data-tip="How many stakeholders are affected?">?</span></label>
+        <select id="${prefix}_scale_${i}"><option value="N/A">N/A</option><option>Low</option><option>Moderate</option><option>Significant</option><option>High</option></select>
+      </div>
+      <div>
+        <label>Irreversibility <span class="tooltip-icon" data-tip="How hard is it to undo? (Low = easy, High = permanent)">?</span></label>
+        <select id="${prefix}_irrev_${i}"><option value="N/A">N/A</option><option>Low</option><option>Moderate</option><option>Significant</option><option>High</option></select>
+      </div>
+    </div>
+    <div style="margin-top:.5rem">
+      <label>Likelihood <span class="tooltip-icon" data-tip="Formula: ((Magnitude + Scale + Irreversibility) / 3) × Likelihood">?</span></label>
+      <select id="${prefix}_like_${i}" style="width:100%"><option value="N/A">N/A</option><option>Very unlikely</option><option>Unlikely</option><option>Likely</option><option>Very likely</option></select>
+    </div>
+  </div>`;
+}
+
+function pillGroup(id, options, classMap) {
+  return `<div class="pill-group" id="${id}_pills">
+    ${options.map(o=>{
+      const key = o.replace(/\s+/g,'').toLowerCase();
+      const cls = classMap[key]||'';
+      return `<span class="pill ${cls}" data-val="${o}" onclick="selectPill('${id}',this,'${classMap[key]||''}')">${o}</span>`;
+    }).join('')}
+    <input type="hidden" id="${id}" value="N/A">
+  </div>`;
+}
+
+function selectPill(id, el, defaultCls) {
+  const group = document.getElementById(id+'_pills');
+  group.querySelectorAll('.pill').forEach(p=>{
+    const key = p.dataset.val.replace(/\s+/g,'').toLowerCase();
+    const map = {
+      'n/a':'selected-na','low':'selected-low','moderate':'selected-mod',
+      'significant':'selected-sig','high':'selected-high',
+      'veryunlikely':'selected-vunlikely','unlikely':'selected-unlikely',
+      'likely':'selected-likely','verylikely':'selected-vlikely',
+      'couldoccur':'selected-couldoccur','rare':'selected-rare'
+    };
+    p.className = 'pill '+(p===el?(map[key]||''):'');
+  });
+  document.getElementById(id).value = el.dataset.val;
+}
+
+const PROB_OPTS = ['N/A','Very likely','Likely','Could occur','Rare'];
+const IMP_OPTS  = ['N/A','Low','Moderate','Significant','High'];
+const PILL_MAP  = {'n/a':'selected-na','low':'selected-low','moderate':'selected-mod','significant':'selected-sig','high':'selected-high','verylikely':'selected-vlikely','likely':'selected-likely','couldoccur':'selected-couldoccur','rare':'selected-rare','veryunlikely':'selected-vunlikely','unlikely':'selected-unlikely'};
+
+function buildStage2UI() {
+  const riskDiv = document.getElementById('risk-items');
+  riskDiv.innerHTML = '';
+  RISKS.forEach((r,i) => {
+    riskDiv.innerHTML += `<div class="risk-item">
+      <div class="risk-item-header">
+        <span class="risk-cat-badge">${r.cat}</span>
+      </div>
+      <div class="risk-question">${r.name}</div>
+      <div class="pill-row">
+        <div class="pill-row-label">Probability <span class="tooltip-icon" data-tip="How likely is this risk to materialise?">?</span></div>
+        ${pillGroup('risk_prob_'+i, PROB_OPTS, PILL_MAP)}
+      </div>
+      <div class="pill-row">
+        <div class="pill-row-label">Impact <span class="tooltip-icon" data-tip="How severe would the financial impact be if this risk occurs?">?</span></div>
+        ${pillGroup('risk_imp_'+i, IMP_OPTS, PILL_MAP)}
+      </div>
+      <label class="na-toggle">
+        <input type="checkbox" id="risk_na_cb_${i}" onchange="toggleNA('risk_na_${i}','risk_prob_${i}','risk_imp_${i}',this.checked)">
+        <input type="hidden" id="risk_na_${i}" value="no">
+        Mark as Not Applicable
+      </label>
+    </div>`;
+  });
+
+  const oppDiv = document.getElementById('opp-items');
+  oppDiv.innerHTML = '';
+  OPPS.forEach((o,i) => {
+    oppDiv.innerHTML += `<div class="risk-item">
+      <div class="risk-item-header">
+        <span class="opp-cat-badge">${o.cat}</span>
+      </div>
+      <div class="risk-question">${o.name}</div>
+      <div class="pill-row">
+        <div class="pill-row-label">Likelihood <span class="tooltip-icon" data-tip="How likely is it that you can capture this opportunity?">?</span></div>
+        ${pillGroup('opp_like_'+i, PROB_OPTS, PILL_MAP)}
+      </div>
+      <div class="pill-row">
+        <div class="pill-row-label">Impact <span class="tooltip-icon" data-tip="How significant would the positive impact be if you capture this opportunity?">?</span></div>
+        ${pillGroup('opp_imp_'+i, IMP_OPTS, PILL_MAP)}
+      </div>
+      <label class="na-toggle">
+        <input type="checkbox" id="opp_na_cb_${i}" onchange="toggleNA('opp_na_${i}','opp_like_${i}','opp_imp_${i}',this.checked)">
+        <input type="hidden" id="opp_na_${i}" value="no">
+        Mark as Not Applicable
+      </label>
+    </div>`;
+  });
+}
+
+// ── Scoring ───────────────────────────────────────────────────
+
+function calcImpactScore(mag, scale, irrev, like) {
+  const m = MAGNITUDE_MAP[mag]||0;
+  const s = MAGNITUDE_MAP[scale]||0;
+  const r = MAGNITUDE_MAP[irrev]||0;
+  const l = LIKELIHOOD_MAP[like]||0;
+  if(m===0 && s===0 && r===0) return 0;
+  return ((m+s+r)/3)*l;
+}
+
+function calcStage1() {
+  // Financial: simple average of selected scores (0–3)
+  const FIN_SCORE_MAP = {
+    'Not Evaluated':0,'Below Industry Average':1,'Average / No Benchmark':2,'Above Industry Average':3,
+    'High Volatility / Large Sensitivity':1,'Moderate Volatility':2,'Low Volatility / Stable':3,
+    'No USP':1,'Weak / Moderate USP':2,'Strong / Unique USP':3,
+    'Shrinking':1,'Mature':2,'Growing':3
+  };
+  let finScores = [];
+  FINANCIAL_CRITERIA.forEach((_,i) => {
+    const val = document.getElementById(`fin_${i}`).value;
+    finScores.push(FIN_SCORE_MAP[val]||0);
+  });
+  const finAvg = finScores.reduce((a,b)=>a+b,0)/finScores.length;
+
+  // Env scores
+  let envScores = ENV_CRITERIA.map((_,i) => {
+    return calcImpactScore(
+      document.getElementById(`env_mag_${i}`).value,
+      document.getElementById(`env_scale_${i}`).value,
+      document.getElementById(`env_irrev_${i}`).value,
+      document.getElementById(`env_like_${i}`).value
+    );
+  });
+
+  // Social scores
+  let socScores = SOCIAL_CRITERIA.map((_,i) => {
+    return calcImpactScore(
+      document.getElementById(`soc_mag_${i}`).value,
+      document.getElementById(`soc_scale_${i}`).value,
+      document.getElementById(`soc_irrev_${i}`).value,
+      document.getElementById(`soc_like_${i}`).value
+    );
+  });
+
+  // Gov scores
+  let govScores = GOV_CRITERIA.map((_,i) => {
+    return calcImpactScore(
+      document.getElementById(`gov_mag_${i}`).value,
+      document.getElementById(`gov_scale_${i}`).value,
+      document.getElementById(`gov_irrev_${i}`).value,
+      document.getElementById(`gov_like_${i}`).value
+    );
+  });
+
+  stage1Scores = {finAvg, finScores, envScores, socScores, govScores};
+  goTo(2);
+}
+
+function calcStage2() {
+  let riskScores = RISKS.map((_,i) => {
+    const na = document.getElementById(`risk_na_${i}`).value;
+    if(na==='yes') return 0;
+    const p = RISK_PROB_MAP[document.getElementById(`risk_prob_${i}`).value]||0;
+    const imp = RISK_IMPACT_MAP[document.getElementById(`risk_imp_${i}`).value]||0;
+    return p * imp;
+  });
+
+  let oppScores = OPPS.map((_,i) => {
+    const na = document.getElementById(`opp_na_${i}`).value;
+    if(na==='yes') return 0;
+    const l = RISK_PROB_MAP[document.getElementById(`opp_like_${i}`).value]||0;
+    const imp = RISK_IMPACT_MAP[document.getElementById(`opp_imp_${i}`).value]||0;
+    return l * imp;
+  });
+
+  stage2Scores = {riskScores, oppScores};
+  buildDashboard();
+  goTo(3);
+}
+
+// ── Dashboard ─────────────────────────────────────────────────
+
+let chartInstance = null;
+let currentChartType = 'bar';
+
+function switchChart(type) {
+  currentChartType = type;
+  document.querySelectorAll('.chart-toggle button').forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById('btn-'+type);
+  if(btn) btn.classList.add('active');
+  if(stage1Scores.envScores) rebuildChart();
+}
+
+function toggleNA(naId, id1, id2, checked) {
+  document.getElementById(naId).value = checked ? 'yes' : 'no';
+  if(checked) {
+    // Select N/A pill in both groups
+    [id1, id2].forEach(id => {
+      const group = document.getElementById(id+'_pills');
+      if(!group) return;
+      group.querySelectorAll('.pill').forEach(p => {
+        p.className = 'pill ' + (p.dataset.val==='N/A' ? 'selected-na' : '');
+      });
+      document.getElementById(id).value = 'N/A';
+    });
+  }
+}
+
+function rebuildChart() {
+  const {envScores, socScores, govScores} = stage1Scores;
+  const allLabels = [...ENV_CRITERIA.map(c=>c.name), ...SOCIAL_CRITERIA.map(c=>c.name), ...GOV_CRITERIA.map(c=>c.name)];
+  const allVals = [...envScores, ...socScores, ...govScores];
+  const colors = allVals.map(v=>v>=2?'rgba(229,62,62,0.75)':'rgba(52,196,124,0.75)');
+  const ctx = document.getElementById('chartImpact').getContext('2d');
+  if(chartInstance) chartInstance.destroy();
+
+  if(currentChartType==='radar'){
+    const radarLabels = ['Environmental','Social','Governance','Financial'];
+    const radarVals = [avg(envScores), avg(socScores), avg(govScores), stage1Scores.finAvg];
+    chartInstance = new Chart(ctx,{
+      type:'radar',
+      data:{labels:radarLabels,datasets:[{label:'Score',data:radarVals.map(v=>parseFloat(v.toFixed(2))),backgroundColor:'rgba(52,196,124,0.2)',borderColor:'rgba(26,92,52,0.8)',borderWidth:2,pointBackgroundColor:'#1a5c34',pointRadius:5}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:4,ticks:{stepSize:1,font:{size:10}},grid:{color:'rgba(0,0,0,0.07)'},pointLabels:{font:{size:11,weight:'600'}}}}}
+    });
+  } else if(currentChartType==='polarArea'){
+    const polarLabels = [...ENV_CRITERIA.map(c=>c.name.split(' ')[0]), ...SOCIAL_CRITERIA.map(c=>c.name.split('(')[0].trim()), ...GOV_CRITERIA.map(c=>c.name.split('(')[0].trim())];
+    chartInstance = new Chart(ctx,{
+      type:'polarArea',
+      data:{labels:polarLabels,datasets:[{data:allVals.map(v=>parseFloat(v.toFixed(2))),backgroundColor:colors,borderWidth:1,borderColor:'rgba(255,255,255,.5)'}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:12}}},scales:{r:{min:0,max:4,ticks:{display:false}}}}
+    });
+  } else {
+    chartInstance = new Chart(ctx,{
+      type:'bar',
+      data:{labels:allLabels,datasets:[{label:'Impact Score',data:allVals.map(v=>parseFloat(v.toFixed(2))),backgroundColor:colors,borderRadius:6,borderSkipped:false}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>'Score: '+ctx.raw}},annotation:{annotations:{threshold:{type:'line',yMin:2,yMax:2,borderColor:'rgba(245,158,11,0.8)',borderWidth:2,borderDash:[6,3],label:{content:'Materiality threshold (2)',display:true,position:'end',font:{size:10},color:'#92400e',backgroundColor:'rgba(254,243,199,0.9)'}}}}},scales:{x:{ticks:{font:{size:10}},grid:{display:false}},y:{min:0,max:4,grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{size:11}}}}}
+    });
+  }
+}
+
+function buildDashboard() {
+  const {finAvg, envScores, socScores, govScores} = stage1Scores;
+  const {riskScores, oppScores} = stage2Scores;
+
+  const envAvg = avg(envScores);
+  const socAvg = avg(socScores);
+  const govAvg = avg(govScores);
+  const totalRisk = riskScores.reduce((a,b)=>a+b,0);
+  const totalOpp = oppScores.reduce((a,b)=>a+b,0);
+
+  document.getElementById('d-fin').textContent = finAvg.toFixed(1);
+  document.getElementById('d-env').textContent = envAvg.toFixed(2);
+  document.getElementById('d-soc').textContent = socAvg.toFixed(2);
+  document.getElementById('d-gov').textContent = govAvg.toFixed(2);
+  document.getElementById('d-risk').textContent = totalRisk.toFixed(1);
+  document.getElementById('d-opp').textContent = totalOpp.toFixed(1);
+
+  // Material topics
+  const matDiv = document.getElementById('material-list');
+  matDiv.innerHTML = '';
+  let hasMaterial = false;
+  ENV_CRITERIA.forEach((c,i) => {
+    if(stage1Scores.envScores[i]>=2){hasMaterial=true;matDiv.innerHTML+=`<div class="material">🌿 Environmental – ${c.name} <strong>(${stage1Scores.envScores[i].toFixed(2)})</strong></div>`}
+  });
+  SOCIAL_CRITERIA.forEach((c,i) => {
+    if(stage1Scores.socScores[i]>=2){hasMaterial=true;matDiv.innerHTML+=`<div class="material">👥 Social – ${c.name} <strong>(${stage1Scores.socScores[i].toFixed(2)})</strong></div>`}
+  });
+  GOV_CRITERIA.forEach((c,i) => {
+    if(stage1Scores.govScores[i]>=2){hasMaterial=true;matDiv.innerHTML+=`<div class="material">⚖️ Governance – ${c.name} <strong>(${stage1Scores.govScores[i].toFixed(2)})</strong></div>`}
+  });
+  if(!hasMaterial) matDiv.innerHTML = '<p style="font-size:.85rem;color:#777">No material topics identified (all scores below 2).</p>';
+
+  // Chart
+  if(chartInstance) chartInstance.destroy();
+  const ctx = document.getElementById('chartImpact').getContext('2d');
+  const allLabels = [...ENV_CRITERIA.map(c=>c.name), ...SOCIAL_CRITERIA.map(c=>c.name), ...GOV_CRITERIA.map(c=>c.name)];
+  const allVals = [...stage1Scores.envScores, ...stage1Scores.socScores, ...stage1Scores.govScores];
+  chartInstance = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: allLabels,
+      datasets:[{
+        label:'Impact Score',
+        data: allVals.map(v=>parseFloat(v.toFixed(2))),
+        backgroundColor: allVals.map(v=>v>=2?'rgba(239,68,68,0.7)':'rgba(26,74,46,0.6)'),
+        borderRadius:4
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`Score: ${ctx.raw}`}}},
+      scales:{
+        x:{ticks:{font:{size:10}},grid:{display:false}},
+        y:{min:0,max:4,grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{size:11}}}
+      }
+    }
+  });
+
+  // Risk matrix display - proper 4x4 visual
+  const riskDiv = document.getElementById('risk-matrix-display');
+  const matColors = {0:'#e5e7eb',1:'#bbf7d0',2:'#fef08a',3:'#fca5a5',4:'#f87171'};
+  const matLabels = ['','Low','Moderate','Significant','High'];
+  const probLabels = ['','Rare','Could occur','Likely','Very likely'];
+  
+  let matHtml = '<p style="font-size:.82rem;color:#555;margin-bottom:.75rem;font-weight:500">Risk matrix (Probability × Impact)</p>';
+  matHtml += '<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:.72rem;width:100%">';
+  matHtml += '<tr><td style="padding:4px;color:#777;font-weight:600">Probability / Impact →</td>';
+  for(let i=1;i<=4;i++) matHtml += `<td style="padding:4px 8px;text-align:center;font-weight:600;color:#555">${matLabels[i]}</td>`;
+  matHtml += '</tr>';
+  
+  for(let p=4;p>=1;p--){
+    matHtml += `<tr><td style="padding:4px;font-weight:600;color:#555">${probLabels[p]}</td>`;
+    for(let imp=1;imp<=4;imp++){
+      const score = p * imp / 4;
+      const col = score>=3?'#fca5a5':score>=2?'#fef08a':score>=1?'#bbf7d0':'#e5e7eb';
+      // find risks in this cell
+      const cellRisks = RISKS.filter((_,i)=>{
+        const na = document.getElementById('risk_na_'+i)?.value;
+        const rp = document.getElementById('risk_prob_'+i)?.value;
+        const ri = document.getElementById('risk_imp_'+i)?.value;
+        const probScore = {'Very likely':4,'Likely':3,'Could occur':2,'Rare':1}[rp]||0;
+        const impScore = {'High':4,'Significant':3,'Moderate':2,'Low':1}[ri]||0;
+        return na!=='yes' && probScore===p && impScore===imp;
+      }).map(r=>r.cat.split(' ')[0]);
+      matHtml += `<td style="padding:4px 8px;text-align:center;background:${col};border-radius:4px;min-width:60px">${cellRisks.join(', ')||''}</td>`;
+    }
+    matHtml += '</tr>';
+  }
+  matHtml += '</table></div>';
+  
+  matHtml += '<p style="font-size:.75rem;margin-top:.75rem;color:#555;font-weight:500">Risk scores per item:</p>';
+  RISKS.forEach((r,i) => {
+    const s = stage2Scores.riskScores[i];
+    const cls = s>=3?'score-low':s>=1.5?'score-mid':'score-high';
+    matHtml += `<div style="display:flex;align-items:center;gap:.75rem;margin:.3rem 0">
+      <span style="flex:1;font-size:.8rem">${r.cat} – ${r.name.substring(0,50)}…</span>
+      <span class="score-badge ${cls}">${s.toFixed(2)}</span>
+    </div>`;
+  });
+  riskDiv.innerHTML = matHtml;
+
+  // SDGs
+  const cat = document.getElementById('bizcat').value;
+  const catSDGs = SDG_BY_CATEGORY[cat] || [];
+  // Add impact-based SDGs
+  const extra = [];
+  if(avg(stage1Scores.envScores)>=1.5) extra.push(13,15);
+  if(stage1Scores.socScores[0]>=1.5) extra.push(8);
+  if(stage1Scores.socScores[3]>=1.5) extra.push(12);
+  allSDGs = [...new Set([...catSDGs,...extra])].sort((a,b)=>a-b);
+  const sdgDiv = document.getElementById('sdg-grid');
+  sdgDiv.innerHTML = allSDGs.map(n=>`<div class="sdg-chip"><span class="num">${n}</span>${SDG_NAMES[n]||'SDG '+n}</div>`).join('');
+
+  buildReport();
+}
+
+function avg(arr) {
+  const valid = arr.filter(x=>x>0);
+  return valid.length ? valid.reduce((a,b)=>a+b,0)/valid.length : 0;
+}
+
+// ── Report & Export ───────────────────────────────────────────
+
+function buildReport() {
+  const name = document.getElementById('name').value || 'Startup';
+  const {finAvg, envScores, socScores, govScores} = stage1Scores;
+  const {riskScores, oppScores} = stage2Scores;
+  const totalRisk = riskScores.reduce((a,b)=>a+b,0);
+  const totalOpp = oppScores.reduce((a,b)=>a+b,0);
+
+  let html = `<h3 style="margin-bottom:.5rem">${name}</h3>
+  <p style="color:#777;font-size:.8rem">Generated: ${new Date().toLocaleDateString()}</p>
+  <hr style="margin:1rem 0;border-color:#eee">
+  <strong>Financial Score:</strong> ${finAvg.toFixed(2)}/3<br>
+  <strong>Environmental avg:</strong> ${avg(envScores).toFixed(2)}<br>
+  <strong>Social avg:</strong> ${avg(socScores).toFixed(2)}<br>
+  <strong>Governance avg:</strong> ${avg(govScores).toFixed(2)}<br>
+  <strong>Total Risk score:</strong> ${totalRisk.toFixed(2)}<br>
+  <strong>Total Opportunity score:</strong> ${totalOpp.toFixed(2)}<br>
+  <strong>Relevant SDGs:</strong> ${allSDGs.map(n=>`SDG ${n}`).join(', ')||'–'}<br>`;
+  document.getElementById('report-content').innerHTML = html;
+}
+
+function exportCSV() {
+  const name = document.getElementById('name').value || 'Startup';
+  const rows = [['Field','Value']];
+  rows.push(['Startup Name', name]);
+  rows.push(['Country', document.getElementById('country').value]);
+  rows.push(['Stage', document.getElementById('stage').value]);
+  rows.push(['Financial Score', stage1Scores.finAvg?.toFixed(2)||'']);
+  ENV_CRITERIA.forEach((c,i) => rows.push([`ENV – ${c.name}`, stage1Scores.envScores?.[i]?.toFixed(2)||'']));
+  SOCIAL_CRITERIA.forEach((c,i) => rows.push([`SOC – ${c.name}`, stage1Scores.socScores?.[i]?.toFixed(2)||'']));
+  RISKS.forEach((r,i) => rows.push([`RISK – ${r.cat}`, stage2Scores.riskScores?.[i]?.toFixed(2)||'']));
+  OPPS.forEach((o,i) => rows.push([`OPP – ${o.cat}`, stage2Scores.oppScores?.[i]?.toFixed(2)||'']));
+  rows.push(['SDGs', allSDGs.join(';')]);
+  const csv = rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download = `zeeus_${name.replace(/\s/g,'_')}.csv`;
+  a.click();
+}
+
+// ── Navigation ────────────────────────────────────────────────
+
+function goTo(n) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(PAGES[n]).classList.add('active');
+  document.querySelectorAll('.nav button').forEach((b,i)=>b.classList.toggle('active',i===n));
+  currentPage = n;
+  window.scrollTo(0,0);
+  const prog = document.getElementById('prog');
+  if(prog) prog.style.width = ((n/(PAGES.length-1))*100)+'%';
+  if(n===4 && stage1Scores.finAvg!==undefined) buildInsights();
+  if(n===5) loadSavedEvaluations();
+}
+
+function saveBasicAndNext() {
+  if(!document.getElementById('name').value){alert('Please fill in the startup name.');return;}
+  if(!document.getElementById('bizcat').value){alert('Please select a business category.');return;}
+  goTo(1);
+}
+
+
+// ── AI Recommendations ────────────────────────────────────────
+
+function buildInsights() {
+  const {finAvg, envScores, socScores, govScores} = stage1Scores;
+  const {riskScores, oppScores} = stage2Scores;
+
+  // ── Maturity Score (0-100) ──────────────────────────────────
+  const finNorm = (finAvg / 3) * 100;
+  const envNorm = Math.max(0, 100 - (avg(envScores) / 4) * 100);
+  const socNorm = Math.max(0, 100 - (avg(socScores) / 4) * 100);
+  const govNorm = Math.max(0, 100 - (avg(govScores) / 4) * 100);
+  const totalRisk = riskScores.reduce((a,b)=>a+b,0);
+  const totalOpp = oppScores.reduce((a,b)=>a+b,0);
+  const maxRisk = RISKS.length * 4;
+  const riskNorm = Math.max(0, 100 - (totalRisk / maxRisk) * 100);
+  const oppNorm = (totalOpp / (OPPS.length * 4)) * 100;
+  const maturity = Math.round((finNorm*0.2 + envNorm*0.2 + socNorm*0.2 + govNorm*0.1 + riskNorm*0.15 + oppNorm*0.15));
+
+  document.getElementById('maturity-score').textContent = maturity;
+  const bar = document.getElementById('maturity-bar');
+  const lbl = document.getElementById('maturity-label');
+  const desc = document.getElementById('maturity-desc');
+  setTimeout(()=>bar.style.width = maturity+'%', 100);
+
+  let level, color, descText;
+  if(maturity>=80){level='Advanced';color='#1a4a2e';descText='Your startup shows strong sustainability practices. Focus on continuous improvement and reporting.';}
+  else if(maturity>=60){level='Developing';color='#16a34a';descText='Good foundations in place. Several areas can be improved to reach advanced sustainability.';}
+  else if(maturity>=40){level='Emerging';color='#f59e0b';descText='Sustainability awareness is growing. Prioritise the material topics and top risks identified.';}
+  else{level='Initial';color='#ef4444';descText='Early stage. Significant opportunities to build sustainability into your business model from the start.';}
+  lbl.textContent = level;
+  lbl.style.color = color;
+  bar.style.background = color;
+  desc.textContent = descText;
+
+  // ── Automatic Recommendations ──────────────────────────────
+  const recs = [];
+  if(finAvg < 2) recs.push({icon:'💰', title:'Strengthen financial fundamentals', text:'Your financial scores are below the industry average. Consider developing robust KPIs such as ROI, IRR and NPV, and conduct sensitivity analysis to stress-test your business model.'});
+  ENV_CRITERIA.forEach((c,i)=>{
+    if(envScores[i]>=2){
+      const tips = {
+        'Water':'Implement water efficiency measures and monitor consumption across your value chain. Consider water recycling and report against ESRS E3 targets.',
+        'Pollution':'Develop a pollution prevention plan covering air, water and soil emissions. Map your key emission sources and set reduction targets.',
+        'Biodiversity':'Conduct a biodiversity impact assessment. Avoid operating in sensitive areas and consider nature-based solutions.',
+        'Circular Economy':'Redesign products/services for circularity. Minimise waste, extend product life and explore take-back schemes.',
+        'Climate Change':'Set science-based emissions reduction targets aligned with a 1.5°C pathway. Disclose your GHG emissions under ESRS E1.'
+      };
+      recs.push({icon:'🌿', title:'Address material risk: '+c.name, text: tips[c.name]||'This topic scored as material. Develop a mitigation plan and set measurable targets.'});
+    }
+  });
+  SOCIAL_CRITERIA.forEach((c,i)=>{
+    if(socScores[i]>=2){
+      const tips = {
+        'Own Workforce (S1)':'Review HR policies to ensure fair pay, safe conditions and equal opportunities. Report workforce metrics under ESRS S1.',
+        'Supply Chain (S2)':'Map your supply chain for human rights risks. Implement supplier codes of conduct and conduct periodic audits.',
+        'Communities (S3)':'Establish a community engagement plan. Assess local impacts and create grievance mechanisms.',
+        'Consumers (S4)':'Strengthen consumer protection policies. Ensure product safety, transparent labelling and accessible complaints processes.',
+        'Corporate Ethics (G1)':'Implement a code of conduct, anti-corruption training and whistleblower protection mechanisms.'
+      };
+      recs.push({icon:'👥', title:'Address material risk: '+c.name, text: tips[c.name]||'This social topic scored as material. Develop concrete improvement actions.'});
+    }
+  });
+  if(totalRisk > RISKS.length * 1.5) recs.push({icon:'⚠️', title:'Reduce overall risk exposure', text:'Your total risk score is elevated. Prioritise the highest-scoring risks and develop mitigation strategies for each, starting with climate and regulatory risks.'});
+  if(totalOpp > OPPS.length * 1.5) recs.push({icon:'🚀', title:'Capitalise on sustainability opportunities', text:'You have significant sustainability opportunities. Develop a plan to capture these, particularly around the green transition and circular economy.'});
+  if(recs.length===0) recs.push({icon:'✅', title:'Strong sustainability profile', text:'Your scores are generally below the materiality threshold. Continue monitoring and consider proactive disclosure aligned with ESRS standards.'});
+
+  const recDiv = document.getElementById('auto-recommendations');
+  recDiv.innerHTML = recs.map((r,i)=>`
+    <div style="display:flex;gap:.75rem;padding:.75rem;background:#f8f8f5;border-radius:8px;margin-bottom:.75rem">
+      <span style="font-size:1.2rem">${r.icon}</span>
+      <div><strong style="font-size:.88rem;color:#1a4a2e">${r.title}</strong><br><span style="font-size:.83rem;color:#555">${r.text}</span></div>
+    </div>`).join('');
+
+  // ── What-If Simulator ──────────────────────────────────────
+  const simDiv = document.getElementById('simulator-controls');
+  const simItems = [
+    {id:'sim_fin', label:'Financial score', val:Math.round(finAvg/3*100), weight:0.2},
+    {id:'sim_env', label:'Environmental performance', val:Math.round(envNorm), weight:0.2},
+    {id:'sim_soc', label:'Social performance', val:Math.round(socNorm), weight:0.2},
+    {id:'sim_gov', label:'Governance performance', val:Math.round(govNorm), weight:0.1},
+    {id:'sim_risk', label:'Risk mitigation', val:Math.round(riskNorm), weight:0.15},
+    {id:'sim_opp', label:'Opportunity capture', val:Math.round(oppNorm), weight:0.15},
+  ];
+  simDiv.innerHTML = simItems.map(s=>`
+    <div style="display:grid;grid-template-columns:180px 1fr 40px;align-items:center;gap:.75rem;margin-bottom:.6rem">
+      <label style="font-size:.8rem;color:#555">${s.label}</label>
+      <input type="range" min="0" max="100" value="${s.val}" id="${s.id}" oninput="updateSimScore()">
+      <span style="font-size:.82rem;font-weight:500;text-align:right" id="${s.id}_out">${s.val}</span>
+    </div>`).join('');
+  window._simWeights = simItems.map(s=>({id:s.id,weight:s.weight}));
+  updateSimScore();
+
+  // ── Action Plan ────────────────────────────────────────────
+  const actions = [];
+  // Collect all issues with urgency
+  ENV_CRITERIA.forEach((c,i)=>{ if(envScores[i]>=2) actions.push({urgency:envScores[i],label:'🌿 '+c.name,action:'Develop mitigation plan, set measurable targets, align with ESRS E standards.',timeline:'0-3 months'}); });
+  SOCIAL_CRITERIA.forEach((c,i)=>{ if(socScores[i]>=2) actions.push({urgency:socScores[i],label:'👥 '+c.name,action:'Review policies, implement controls, report under ESRS S standards.',timeline:'0-3 months'}); });
+  RISKS.forEach((r,i)=>{ if(riskScores[i]>=2) actions.push({urgency:riskScores[i],label:'⚠️ Risk: '+r.cat,action:'Develop risk mitigation strategy and contingency plan.',timeline:'1-6 months'}); });
+  OPPS.forEach((o,i)=>{ if(oppScores[i]>=2) actions.push({urgency:oppScores[i],label:'🚀 Opportunity: '+o.cat,action:'Build business case and implementation plan to capture this opportunity.',timeline:'3-12 months'}); });
+  if(finAvg<2) actions.push({urgency:3-finAvg,label:'💰 Financial KPIs',action:'Establish financial benchmarks, conduct sensitivity analysis and build investor-ready projections.',timeline:'0-6 months'});
+  actions.sort((a,b)=>b.urgency-a.urgency);
+
+  const actionDiv = document.getElementById('action-plan');
+  if(actions.length===0){
+    actionDiv.innerHTML = '<p style="font-size:.85rem;color:#777">No urgent actions identified. Maintain current practices and focus on proactive disclosure.</p>';
+  } else {
+    actionDiv.innerHTML = actions.map((a,i)=>`
+      <div style="display:grid;grid-template-columns:auto 1fr auto;gap:.75rem;align-items:start;padding:.75rem;border-left:3px solid ${a.urgency>=3?'#ef4444':a.urgency>=2?'#f59e0b':'#22c55e'};margin-bottom:.75rem;background:#f8f8f5;border-radius:0 8px 8px 0">
+        <span style="background:#1a4a2e;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0">${i+1}</span>
+        <div><strong style="font-size:.85rem">${a.label}</strong><br><span style="font-size:.8rem;color:#555">${a.action}</span></div>
+        <span style="font-size:.72rem;background:#e8f5e9;color:#1a4a2e;padding:.2rem .5rem;border-radius:10px;white-space:nowrap">${a.timeline}</span>
+      </div>`).join('');
+  }
+
+  // ── Roadmap ────────────────────────────────────────────────
+  const roadmapDiv = document.getElementById('roadmap');
+  const phases = [
+    {period:'Month 1-2', icon:'🔍', title:'Assess & Prioritise', items:['Complete full ESRS dual materiality assessment','Map your value chain impacts','Identify top 3 material topics']},
+    {period:'Month 3-4', icon:'📋', title:'Plan & Commit', items:['Set measurable sustainability targets','Assign ownership for each material topic','Develop risk mitigation plans for top risks']},
+    {period:'Month 5-8', icon:'⚙️', title:'Implement', items:['Launch key sustainability initiatives','Build data collection processes','Engage suppliers on sustainability requirements']},
+    {period:'Month 9-12', icon:'📊', title:'Measure & Report', items:['Publish first sustainability report','Track KPIs against targets','Identify opportunities for next cycle','Align with SDGs: '+allSDGs.slice(0,4).map(n=>'SDG '+n).join(', ')]},
+  ];
+  roadmapDiv.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem">'+
+    phases.map(p=>`
+      <div style="background:#f8f8f5;border-radius:8px;padding:1rem;border-top:3px solid #1a4a2e">
+        <div style="font-size:.72rem;color:#777;margin-bottom:.3rem">${p.period}</div>
+        <div style="font-size:1.2rem;margin-bottom:.3rem">${p.icon}</div>
+        <div style="font-size:.88rem;font-weight:600;color:#1a4a2e;margin-bottom:.5rem">${p.title}</div>
+        ${p.items.map(it=>`<div style="font-size:.78rem;color:#555;padding:.2rem 0;border-bottom:1px solid #e8e8e8">• ${it}</div>`).join('')}
+      </div>`).join('')+'</div>';
+}
+
+function updateSimScore() {
+  if(!window._simWeights) return;
+  let score = 0;
+  window._simWeights.forEach(s=>{
+    const val = parseInt(document.getElementById(s.id)?.value||0);
+    document.getElementById(s.id+'_out').textContent = val;
+    score += val * s.weight;
+  });
+  document.getElementById('sim-score').textContent = Math.round(score);
+}
+
+async function getAIRecommendations() {
+  const btn = document.getElementById('ai-btn');
+  const loading = document.getElementById('ai-loading');
+  const result = document.getElementById('ai-result');
+  btn.disabled = true;
+  loading.style.display = 'block';
+  result.innerHTML = '';
+
+  const name = document.getElementById('name').value || 'this startup';
+  const cat = document.getElementById('bizcat').value || 'unknown';
+  const {finAvg, envScores, socScores, govScores} = stage1Scores;
+  const {riskScores, oppScores} = stage2Scores;
+
+  const materialTopics = [];
+  ENV_CRITERIA.forEach((c,i)=>{ if(envScores[i]>=2) materialTopics.push('Environmental - '+c.name); });
+  SOCIAL_CRITERIA.forEach((c,i)=>{ if(socScores[i]>=2) materialTopics.push('Social - '+c.name); });
+  GOV_CRITERIA.forEach((c,i)=>{ if(govScores[i]>=2) materialTopics.push('Governance - '+c.name); });
+
+  const topRisks = RISKS.map((r,i)=>({name:r.cat,score:riskScores[i]})).filter(r=>r.score>=1.5).map(r=>r.name);
+  const topOpps = OPPS.map((o,i)=>({name:o.cat,score:oppScores[i]})).filter(o=>o.score>=1.5).map(o=>o.name);
+
+  const prompt = `You are a sustainability advisor for startups. Based on this evaluation, provide 4-6 concise, actionable recommendations.
+
+Startup: ${name}
+Business category: ${cat}
+Financial score: ${finAvg?.toFixed(2)}/3
+Environmental avg score: ${avg(envScores).toFixed(2)}/4
+Social avg score: ${avg(socScores).toFixed(2)}/4
+Governance avg score: ${avg(govScores).toFixed(2)}/4
+Material topics (score >= 2): ${materialTopics.length ? materialTopics.join(', ') : 'None'}
+Top risks: ${topRisks.length ? topRisks.join(', ') : 'None identified'}
+Top opportunities: ${topOpps.length ? topOpps.join(', ') : 'None identified'}
+Relevant SDGs: ${allSDGs.map(n=>'SDG '+n).join(', ')}
+
+Provide practical recommendations aligned with ESRS dual materiality standards and UN SDGs. Format as a numbered list. Be specific and actionable. Keep each recommendation to 2-3 sentences.`;
+
+  try {
+    const response = await fetch('/api/recommend', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({prompt})
+    });
+    const data = await response.json();
+    let text = '';
+    if(data.content && Array.isArray(data.content)){
+      text = data.content.map(c=>c.text||'').join('\n').trim();
+    } else if(data.error){
+      text = 'API error: ' + (data.error.message || JSON.stringify(data.error));
+    }
+    if(!text) text = 'No recommendations generated.';
+    // Format numbered list nicely
+    text = text.replace(/^(\d+\.)/gm, '<br><strong>$1</strong>').replace(/\n/g,'<br>');
+    result.innerHTML = text;
+  } catch(e) {
+    result.innerHTML = '<span style="color:#b91c1c">Could not connect to AI: ' + e.message + '</span>';
+  }
+  loading.style.display = 'none';
+  btn.disabled = false;
+}
+
+// ── Print / PDF ───────────────────────────────────────────────
+
+function printReport() {
+  const name = document.getElementById('name').value || 'Startup';
+  const {finAvg, envScores, socScores, govScores} = stage1Scores;
+  const {riskScores, oppScores} = stage2Scores;
+  const totalRisk = riskScores.reduce((a,b)=>a+b,0);
+  const totalOpp = oppScores.reduce((a,b)=>a+b,0);
+
+  const materialTopics = [];
+  ENV_CRITERIA.forEach((c,i)=>{ if(envScores[i]>=2) materialTopics.push('Environmental – '+c.name+' ('+envScores[i].toFixed(2)+')'); });
+  SOCIAL_CRITERIA.forEach((c,i)=>{ if(socScores[i]>=2) materialTopics.push('Social – '+c.name+' ('+socScores[i].toFixed(2)+')'); });
+  GOV_CRITERIA.forEach((c,i)=>{ if(govScores[i]>=2) materialTopics.push('Governance – '+c.name+' ('+govScores[i].toFixed(2)+')'); });
+
+  const aiText = document.getElementById('ai-result')?.innerHTML || '';
+
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><title>ZEEUS Report – ${name}</title>
+  <style>
+    body{font-family:system-ui,sans-serif;padding:2rem;color:#1a1a1a;max-width:800px;margin:0 auto}
+    h1{color:#1a4a2e;font-size:1.4rem;border-bottom:2px solid #1a4a2e;padding-bottom:.5rem}
+    h2{color:#1a4a2e;font-size:1rem;margin-top:1.5rem}
+    table{width:100%;border-collapse:collapse;font-size:.9rem;margin:.75rem 0}
+    td,th{padding:.4rem .75rem;border:1px solid #e0e0e0;text-align:left}
+    th{background:#f0f7f2;color:#1a4a2e;font-weight:600}
+    .material{background:#fef3c7;padding:.3rem .75rem;border-radius:4px;margin:.2rem 0;font-size:.85rem}
+    .sdg{display:inline-block;background:#e8f5e9;border:1px solid #c8e6c9;border-radius:6px;padding:.2rem .5rem;font-size:.8rem;margin:.2rem;color:#1a4a2e}
+    .footer{margin-top:2rem;font-size:.75rem;color:#999;border-top:1px solid #eee;padding-top:.5rem}
+    @media print{body{padding:1rem}}
+  </style></head><body>
+  <h1>ZEEUS Sustainability Evaluation Report</h1>
+  <p style="color:#777;font-size:.85rem">Generated: ${new Date().toLocaleDateString()} | Startup: <strong>${name}</strong></p>
+
+  <h2>Stage I – Impact Scores</h2>
+  <table>
+    <tr><th>Dimension</th><th>Score</th><th>Status</th></tr>
+    <tr><td>Financial</td><td>${finAvg.toFixed(2)}/3</td><td>${finAvg>=2?'Good':'Needs attention'}</td></tr>
+    <tr><td>Environmental (avg)</td><td>${avg(envScores).toFixed(2)}/4</td><td>${avg(envScores)>=2?'Material':'Below threshold'}</td></tr>
+    <tr><td>Social (avg)</td><td>${avg(socScores).toFixed(2)}/4</td><td>${avg(socScores)>=2?'Material':'Below threshold'}</td></tr>
+    <tr><td>Governance (avg)</td><td>${avg(govScores).toFixed(2)}/4</td><td>${avg(govScores)>=2?'Material':'Below threshold'}</td></tr>
+  </table>
+
+  <h2>Environmental Details</h2>
+  <table>
+    <tr><th>Topic</th><th>Score</th></tr>
+    ${ENV_CRITERIA.map((c,i)=>`<tr><td>${c.name}</td><td style="color:${envScores[i]>=2?'#b91c1c':'#065f46'}">${envScores[i].toFixed(2)}${envScores[i]>=2?' ⚠ Material':''}</td></tr>`).join('')}
+  </table>
+
+  <h2>Social Details</h2>
+  <table>
+    <tr><th>Topic</th><th>Score</th></tr>
+    ${SOCIAL_CRITERIA.map((c,i)=>`<tr><td>${c.name}</td><td style="color:${socScores[i]>=2?'#b91c1c':'#065f46'}">${socScores[i].toFixed(2)}${socScores[i]>=2?' ⚠ Material':''}</td></tr>`).join('')}
+  </table>
+
+  <h2>Material Topics (score ≥ 2)</h2>
+  ${materialTopics.length ? materialTopics.map(t=>`<div class="material">${t}</div>`).join('') : '<p style="color:#777;font-size:.85rem">No material topics identified.</p>'}
+
+  <h2>Stage II – Risks & Opportunities</h2>
+  <table>
+    <tr><th>Risk</th><th>Score</th></tr>
+    ${RISKS.map((r,i)=>`<tr><td>${r.cat} – ${r.name.substring(0,60)}</td><td>${riskScores[i].toFixed(2)}</td></tr>`).join('')}
+    <tr><td><strong>Total Risk Score</strong></td><td><strong>${totalRisk.toFixed(2)}</strong></td></tr>
+  </table>
+  <table>
+    <tr><th>Opportunity</th><th>Score</th></tr>
+    ${OPPS.map((o,i)=>`<tr><td>${o.cat} – ${o.name.substring(0,60)}</td><td>${oppScores[i].toFixed(2)}</td></tr>`).join('')}
+    <tr><td><strong>Total Opportunity Score</strong></td><td><strong>${totalOpp.toFixed(2)}</strong></td></tr>
+  </table>
+
+  <h2>SDG Alignment</h2>
+  <div>${allSDGs.map(n=>`<span class="sdg">SDG ${n} – ${SDG_NAMES[n]||''}</span>`).join('')}</div>
+
+  ${aiText ? `<h2>AI Recommendations</h2><div style="font-size:.88rem;line-height:1.8">${aiText}</div>` : ''}
+
+  <div class="footer">ZEEUS – Sustainability by Design Tool | Aligned with ESRS Dual Materiality & UN SDGs</div>
+  </body></html>`);
+  win.document.close();
+  win.print();
+}
+
+// ── Database ──────────────────────────────────────────────────
+
+async function saveEvaluation() {
+  if(!stage1Scores.finAvg) { alert('Please complete the evaluation first.'); return; }
+  const status = document.getElementById('save-status');
+  status.style.display = 'block';
+  status.textContent = 'Saving…';
+
+  const basic = {
+    name: document.getElementById('name').value || 'Unnamed',
+    country: document.getElementById('country').value,
+    stage: document.getElementById('stage').value,
+    bizcat: document.getElementById('bizcat').value,
+    approach: document.getElementById('approach').value,
+    prodservice: document.getElementById('prodservice').value,
+    launched: document.getElementById('launched').value,
+    description: document.getElementById('description').value
+  };
+
+  const stage1 = [];
+  ENV_CRITERIA.forEach((c,i) => stage1.push({dimension:'environmental', criterion:c.name, score:stage1Scores.envScores[i]}));
+  SOCIAL_CRITERIA.forEach((c,i) => stage1.push({dimension:'social', criterion:c.name, score:stage1Scores.socScores[i]}));
+  GOV_CRITERIA.forEach((c,i) => stage1.push({dimension:'governance', criterion:c.name, score:stage1Scores.govScores[i]}));
+  stage1.push({dimension:'financial', criterion:'Financial avg', score:stage1Scores.finAvg});
+
+  const stage2 = [];
+  RISKS.forEach((r,i) => stage2.push({type:'risk', category:r.cat, score:stage2Scores.riskScores[i]}));
+  OPPS.forEach((o,i) => stage2.push({type:'opportunity', category:o.cat, score:stage2Scores.oppScores[i]}));
+
+  const sdgs = allSDGs.map(n => ({number:n, source:'auto'}));
+
+  try {
+    const res = await fetch('/api/evaluations', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({basic, stage1, stage2, sdgs})
+    });
+    const data = await res.json();
+    status.textContent = '✅ Saved successfully! (ID: ' + data.id + ')';
+    status.style.color = '#065f46';
+    loadSavedEvaluations();
+  } catch(e) {
+    status.textContent = '❌ Error saving: ' + e.message;
+    status.style.color = '#b91c1c';
+  }
+}
+
+async function loadSavedEvaluations() {
+  const div = document.getElementById('saved-list');
+  if(!div) return;
+  try {
+    const res = await fetch('/api/evaluations');
+    const data = await res.json();
+    if(!data.length) {
+      div.innerHTML = '<p style="font-size:.85rem;color:#777">No saved evaluations yet.</p>';
+      return;
+    }
+    div.innerHTML = data.map(e => `
+      <div style="display:flex;align-items:center;gap:.75rem;padding:.75rem;background:var(--bg);border-radius:8px;margin-bottom:.5rem">
+        <div style="flex:1">
+          <div style="font-size:.88rem;font-weight:600">${e.name}</div>
+          <div style="font-size:.75rem;color:var(--text3)">${e.country||'–'} · Stage ${e.stage||'–'} · ${new Date(e.created_at).toLocaleDateString()}</div>
+        </div>
+        <button onclick="deleteEvaluation(${e.id})" style="background:#fee2e2;border:none;color:#b91c1c;border-radius:6px;padding:.3rem .6rem;cursor:pointer;font-size:.75rem">Delete</button>
+      </div>`).join('');
+  } catch(e) {
+    div.innerHTML = '<p style="font-size:.82rem;color:#b91c1c">Could not load saved evaluations.</p>';
+  }
+}
+
+async function deleteEvaluation(id) {
+  if(!confirm('Delete this evaluation?')) return;
+  await fetch('/api/evaluations/' + id, {method:'DELETE'});
+  loadSavedEvaluations();
+}
+
+// ── Init ──────────────────────────────────────────────────────
+buildStage1UI();
+buildStage2UI();
+</script>
+</body>
+</html>

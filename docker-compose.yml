@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  frontend:
+    build: .
+    ports:
+      - "8080:3000"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    volumes:
+      - zeeus_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  zeeus_data:
