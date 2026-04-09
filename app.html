@@ -1181,7 +1181,10 @@ function buildDashboard() {
   document.getElementById('d-env').textContent = envAvg.toFixed(2);
   document.getElementById('d-soc').textContent = socAvg.toFixed(2);
   document.getElementById('d-gov').textContent = govAvg.toFixed(2);
-  document.getElementById('d-fin-lbl').innerHTML = scoreBadgeHtml(finAvg);
+  document.getElementById('d-fin-lbl').innerHTML = (()=>{
+    const {label,color,bg} = finScoreLabel(finAvg);
+    return `<span style="background:${bg};color:${color};font-size:.72rem;font-weight:700;padding:.15rem .5rem;border-radius:10px">${label} (${finAvg.toFixed(2)})</span>`;
+  })();
   document.getElementById('d-env-lbl').innerHTML = scoreBadgeHtml(envAvg);
   document.getElementById('d-soc-lbl').innerHTML = scoreBadgeHtml(socAvg);
   document.getElementById('d-gov-lbl').innerHTML = scoreBadgeHtml(govAvg);
@@ -1375,6 +1378,14 @@ function scoreLabel(s) {
   if(s < 2)     return {label:'Low',            color:'#15803d', bg:'#bbf7d0'};
   if(s < 2.5)   return {label:'Relevant',       color:'#92400e', bg:'#fef3c7'};
   return         {label:'High Priority',         color:'#b91c1c', bg:'#fee2e2'};
+}
+
+function finScoreLabel(s) {
+  if(s === 0)   return {label:'Not evaluated',  color:'#9ca3af', bg:'#f3f4f6'};
+  if(s < 1)     return {label:'Weak',           color:'#b91c1c', bg:'#fee2e2'};
+  if(s < 2)     return {label:'Below average',  color:'#92400e', bg:'#fef3c7'};
+  if(s < 3)     return {label:'Average',        color:'#15803d', bg:'#bbf7d0'};
+  return         {label:'Strong',               color:'#166534', bg:'#dcfce7'};
 }
 
 function scoreBadgeHtml(s) {
