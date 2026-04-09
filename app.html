@@ -1132,13 +1132,11 @@ function rebuildChart() {
   if(chartInstance) chartInstance.destroy();
 
   if(currentChartType==='radar'){
-    const radarLabels = ['Environmental','Social','Governance','Financial'];
-    const radarVals = [avg(envScores), avg(socScores), avg(govScores), stage1Scores.finAvg];
     const radarThresholdPlugin = {id:'radarThreshold',afterDraw(chart){const ctx2=chart.ctx,r=chart.scales.r;if(!r)return;ctx2.save();ctx2.strokeStyle='rgba(245,158,11,0.9)';ctx2.lineWidth=2;ctx2.setLineDash([6,3]);const pts=chart.data.labels.map((_,i)=>{const angle=r.getIndexAngle(i)-Math.PI/2;const d=r.getDistanceFromCenterForValue(2.5);return{x:r.xCenter+Math.cos(angle)*d,y:r.yCenter+Math.sin(angle)*d};});if(pts.length>0){ctx2.beginPath();ctx2.moveTo(pts[0].x,pts[0].y);pts.forEach(p=>ctx2.lineTo(p.x,p.y));ctx2.closePath();ctx2.stroke();}ctx2.restore();}};
     chartInstance = new Chart(ctx,{
       type:'radar',
-      data:{labels:radarLabels,datasets:[{label:'Score',data:radarVals.map(v=>parseFloat(v.toFixed(2))),backgroundColor:'rgba(52,196,124,0.2)',borderColor:'rgba(26,92,52,0.8)',borderWidth:2,pointBackgroundColor:'#1a5c34',pointRadius:5}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:4,ticks:{stepSize:1,font:{size:10}},grid:{color:'rgba(0,0,0,0.07)'},pointLabels:{font:{size:11,weight:'600'}}}}},
+      data:{labels:allLabels,datasets:[{label:'Score',data:allVals.map(v=>parseFloat(v.toFixed(2))),backgroundColor:'rgba(52,196,124,0.2)',borderColor:'rgba(26,92,52,0.8)',borderWidth:2,pointBackgroundColor:'#1a5c34',pointRadius:5}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:4,ticks:{stepSize:1,font:{size:10}},grid:{color:'rgba(0,0,0,0.07)'},pointLabels:{font:{size:9,weight:'600'}}}}},
       plugins:[radarThresholdPlugin]
     });
   } else if(currentChartType==='polarArea'){
