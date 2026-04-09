@@ -1285,8 +1285,8 @@ function buildDashboard() {
         const probScore = {'Very likely':4,'Likely':3,'Could occur':2,'Rare':1}[rp]||0;
         const impScore = {'High':4,'Significant':3,'Moderate':2,'Low':1}[ri]||0;
         return na!=='yes' && probScore===p && impScore===imp;
-      }).map(r=>r.cat.split(' ')[0]);
-      matHtml += `<td style="padding:4px 8px;text-align:center;background:${col};border-radius:4px;min-width:60px">${cellRisks.join(', ')||''}</td>`;
+      }).map(r=>r.cat.split('(')[0].trim());
+      matHtml += `<td style="padding:4px 8px;text-align:center;background:${col};border-radius:4px;min-width:60px;font-size:.68rem">${cellRisks.join('<br>')||''}</td>`;
     }
     matHtml += '</tr>';
   }
@@ -1310,10 +1310,12 @@ function buildDashboard() {
   for(let i=1;i<=4;i++) matHtml += `<td style="padding:4px 8px;text-align:center;font-weight:600;color:#555">${matLabels[i]}</td>`;
   matHtml += '</tr>';
 
+  const oppColors = {0:'#e5e7eb',1:'#fca5a5',2:'#fef08a',3:'#bbf7d0',4:'#86efac'};
   for(let p=4;p>=1;p--){
     matHtml += `<tr><td style="padding:4px;font-weight:600;color:#555">${probLabels[p]}</td>`;
     for(let imp=1;imp<=4;imp++){
-      const col = matColors[(OPP_MATRIX[['','Rare','Could occur','Likely','Very likely'][p]]||{})[['','Low','Moderate','Significant','High'][imp]]||0];
+      const oppScore = (OPP_MATRIX[['','Rare','Could occur','Likely','Very likely'][p]]||{})[['','Low','Moderate','Significant','High'][imp]]||0;
+      const col = oppColors[oppScore];
       const cellOpps = OPPS.filter((_,i)=>{
         const na = document.getElementById('opp_na_'+i)?.value;
         const ol = document.getElementById('opp_like_'+i)?.value;
@@ -1321,8 +1323,8 @@ function buildDashboard() {
         const likeScore = {'Very likely':4,'Likely':3,'Could occur':2,'Rare':1}[ol]||0;
         const impScore = {'High':4,'Significant':3,'Moderate':2,'Low':1}[oi]||0;
         return na!=='yes' && likeScore===p && impScore===imp;
-      }).map(o=>o.cat.split(' ')[0]);
-      matHtml += `<td style="padding:4px 8px;text-align:center;background:${col||'#e5e7eb'};border-radius:4px;min-width:60px">${cellOpps.join(', ')||''}</td>`;
+      }).map(o=>o.cat.split('(')[0].trim());
+      matHtml += `<td style="padding:4px 8px;text-align:center;background:${col};border-radius:4px;min-width:60px;font-size:.68rem">${cellOpps.join('<br>')||''}</td>`;
     }
     matHtml += '</tr>';
   }
