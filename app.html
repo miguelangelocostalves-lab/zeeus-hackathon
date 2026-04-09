@@ -1922,8 +1922,8 @@ async function deleteEvaluation(id) {
 function filterStageOptions() {
   const launched = document.getElementById('launched').value;
   const stageSelect = document.getElementById('stage');
-  const preLaunch  = ['1','2','3','4','5'];
-  const postLaunch = ['6','7','8','9','10'];
+  const preLaunch  = ['1','2','3','4'];
+  const postLaunch = ['5','6','7','8','9','10'];
 
   // Mark options as hidden on the real select
   Array.from(stageSelect.options).forEach(opt => {
