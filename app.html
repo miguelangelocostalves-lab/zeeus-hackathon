@@ -959,9 +959,9 @@ function selectPill(id, el, defaultCls) {
   document.getElementById(id).value = el.dataset.val;
 }
 
-const PROB_OPTS = ['N/A','Very likely','Likely','Could occur','Rare'];
+const PROB_OPTS = ['N/A','Rare','Could occur','Likely','Very likely'];
 const IMP_OPTS  = ['N/A','Low','Moderate','Significant','High'];
-const PILL_MAP  = {'n/a':'selected-na','low':'selected-low','moderate':'selected-mod','significant':'selected-sig','high':'selected-high','verylikely':'selected-vlikely','likely':'selected-likely','couldoccur':'selected-couldoccur','rare':'selected-rare','veryunlikely':'selected-vunlikely','unlikely':'selected-unlikely'};
+const PILL_MAP  = {'n/a':'selected-na','low':'selected-low','moderate':'selected-mod','significant':'selected-sig','high':'selected-high','verylikely':'selected-vlikely','likely':'selected-sig','couldoccur':'selected-couldoccur','rare':'selected-rare','veryunlikely':'selected-vunlikely','unlikely':'selected-unlikely'};
 
 function buildStage2UI() {
   const riskDiv = document.getElementById('risk-items');
