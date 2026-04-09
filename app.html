@@ -1413,20 +1413,46 @@ function restoreFromRawInputs(rawInputs) {
     if(hidden) hidden.value = value;
   }
 
-  // Financial
+  // Financial - set value then refresh custom dropdown
   FINANCIAL_CRITERIA.forEach((_,i) => {
-    if(rawInputs['fin_'+i]) setSelectVal('fin_'+i, rawInputs['fin_'+i]);
+    const key = 'fin_'+i;
+    if(rawInputs[key]) {
+      const el = document.getElementById(key);
+      if(el) {
+        el.value = rawInputs[key];
+        // Refresh custom dropdown display
+        const wrap = el.closest('.z-select-wrap');
+        if(wrap) {
+          const btn = wrap.querySelector('.z-select-btn span');
+          if(btn) { btn.textContent = rawInputs[key]; btn.className = rawInputs[key] === 'Not Evaluated' ? 'placeholder' : ''; }
+        }
+      }
+    }
   });
 
   // Environmental, Social, Governance
   [['env', ENV_CRITERIA], ['soc', SOCIAL_CRITERIA], ['gov', GOV_CRITERIA]].forEach(([prefix, criteria]) => {
     criteria.forEach((_,i) => {
-      ['mag','scale','irrev'].forEach(dim => {
+      ['mag','scale','irrev','like'].forEach(dim => {
         const key = prefix+'_'+dim+'_'+i;
-        if(rawInputs[key]) restorePill(key, rawInputs[key]);
+        if(rawInputs[key]) {
+          // Try pill first, then select
+          const pills = document.getElementById(key+'_pills');
+          if(pills) {
+            restorePill(key, rawInputs[key]);
+          } else {
+            const el = document.getElementById(key);
+            if(el) {
+              el.value = rawInputs[key];
+              const wrap = el.closest && el.closest('.z-select-wrap');
+              if(wrap) {
+                const btn = wrap.querySelector('.z-select-btn span');
+                if(btn) { btn.textContent = rawInputs[key]; btn.className = ''; }
+              }
+            }
+          }
+        }
       });
-      const likeKey = prefix+'_like_'+i;
-      if(rawInputs[likeKey]) restorePill(likeKey, rawInputs[likeKey]);
     });
   });
 
@@ -1987,7 +2013,8 @@ async function loadEvaluation(id) {
 
     document.getElementById('name').value = evaluation.name || '';
     document.getElementById('country').value = evaluation.country || '';
-    document.getElementById('country-search').value = evaluation.country || '';
+    const csearch = document.getElementById('country-search');
+    if(csearch) csearch.value = evaluation.country || '';
     if(evaluation.country) applyCountryContext(evaluation.country);
     document.getElementById('stage').value = evaluation.stage || '';
     document.getElementById('bizcat').value = evaluation.bizcat?.startsWith('nace_') ? evaluation.bizcat : '';
