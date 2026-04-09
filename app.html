@@ -13,11 +13,11 @@
 </script>
 <style>
 :root{
-  --green-dark:#0f3d22;--green:#1a5c34;--green-mid:#2d7a4f;--green-light:#e6f4ec;
-  --accent:#34c47c;--accent2:#f0a500;
-  --bg:#f0f4f0;--bg2:#e8efe9;
-  --white:#fff;--border:#dde8de;
-  --text:#1a1a1a;--text2:#4a5a4e;--text3:#7a8f80;
+  --green-dark:#00654A;--green:#3FA535;--green-mid:#39B54A;--green-light:#eaf7e6;
+  --accent:#8CC63F;--accent2:#B9E021;
+  --bg:#f2f7f2;--bg2:#e6f0e6;
+  --white:#fff;--border:#c8e0c0;
+  --text:#1a1a1a;--text2:#2d4a2d;--text3:#5a7a5a;
   --red:#e53e3e;--amber:#d97706;--emerald:#059669;
   --radius:12px;--radius-lg:16px;--shadow:0 2px 12px rgba(0,0,0,.07);
 }
@@ -25,7 +25,7 @@
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:15px;min-height:100vh}
 
 /* Header */
-.header{background:linear-gradient(135deg,var(--green-dark) 0%,var(--green-mid) 100%);color:#fff;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between}
+.header{background:linear-gradient(135deg,#00654A 0%,#39B54A 60%,#8CC63F 100%);color:#fff;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between}
 .header-left{display:flex;align-items:center;gap:.75rem}
 .header-logo{width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
 .header h1{font-size:1.1rem;font-weight:700;letter-spacing:-.01em}
@@ -34,12 +34,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 /* Progress bar */
 .progress-bar{background:rgba(255,255,255,.1);height:3px}
-.progress-fill{height:100%;background:var(--accent);transition:width .4s ease}
+.progress-fill{height:100%;background:linear-gradient(90deg,#8CC63F,#B9E021);transition:width .4s ease}
 
 /* Nav */
 .nav{background:var(--white);border-bottom:1px solid var(--border);display:flex;gap:0;overflow-x:auto;padding:0 1rem}
 .nav button{padding:.7rem 1rem;border:none;background:none;cursor:pointer;font-size:.82rem;color:var(--text3);white-space:nowrap;border-bottom:2px solid transparent;transition:.15s;display:flex;align-items:center;gap:.4rem}
-.nav button.active{color:var(--green);border-bottom-color:var(--accent);font-weight:600}
+.nav button.active{color:#3FA535;border-bottom-color:#8CC63F;font-weight:600}
 .nav button:hover:not(.active){color:var(--text2);background:var(--bg)}
 .nav-icon{font-size:.9rem}
 
@@ -75,8 +75,8 @@ textarea{resize:vertical;line-height:1.5}
 
 /* Buttons */
 .btn{padding:.6rem 1.4rem;border-radius:8px;border:none;cursor:pointer;font-size:.88rem;font-weight:600;transition:.15s;display:inline-flex;align-items:center;gap:.4rem}
-.btn-primary{background:var(--green);color:#fff;box-shadow:0 2px 8px rgba(26,92,52,.3)}
-.btn-primary:hover{background:var(--green-dark);transform:translateY(-1px);box-shadow:0 4px 12px rgba(26,92,52,.35)}
+.btn-primary{background:linear-gradient(135deg,#3FA535,#39B54A);color:#fff;box-shadow:0 2px 8px rgba(63,165,53,.35)}
+.btn-primary:hover{background:linear-gradient(135deg,#00654A,#3FA535);transform:translateY(-1px);box-shadow:0 4px 12px rgba(26,92,52,.35)}
 .btn-outline{background:var(--white);border:1.5px solid var(--green);color:var(--green)}
 .btn-outline:hover{background:var(--green-light)}
 .btn-row{display:flex;justify-content:flex-end;gap:.75rem;margin-top:1.5rem}
@@ -112,12 +112,12 @@ textarea{resize:vertical;line-height:1.5}
 .metric-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.1)}
 .metric-card .m-icon{font-size:1.4rem;margin-bottom:.4rem}
 .metric-card .label{font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.35rem;font-weight:600}
-.metric-card .value{font-size:1.8rem;font-weight:700;color:var(--green)}
+.metric-card .value{font-size:1.8rem;font-weight:700;color:#3FA535}
 .metric-card .sub{font-size:.7rem;color:var(--text3);margin-top:.2rem}
 
 /* SDG chips */
 .sdg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:.6rem}
-.sdg-chip{background:linear-gradient(135deg,#e6f4ec,#d4eede);border-radius:10px;padding:.6rem .4rem;text-align:center;font-size:.7rem;font-weight:600;color:var(--green-dark);border:1px solid #b8dfc7;transition:.15s;cursor:default}
+.sdg-chip{background:linear-gradient(135deg,#eaf7e6,#d4f0c8);border-radius:10px;padding:.6rem .4rem;text-align:center;font-size:.7rem;font-weight:600;color:#00654A;border:1px solid #8CC63F;transition:.15s;cursor:default}
 .sdg-chip:hover{transform:translateY(-1px);box-shadow:0 3px 8px rgba(26,92,52,.15)}
 .sdg-chip .num{font-size:1rem;font-weight:800;display:block;margin-bottom:.15rem}
 
@@ -128,7 +128,7 @@ textarea{resize:vertical;line-height:1.5}
 .chart-toggle button.active{background:var(--green);color:#fff;border-color:var(--green)}
 
 /* Info box */
-.info-box{background:linear-gradient(135deg,var(--green-light),#d4f0e4);border-radius:10px;padding:1rem 1.1rem;font-size:.82rem;color:var(--green-dark);margin-bottom:1.1rem;line-height:1.6;border:1px solid #b8dfc7;display:flex;gap:.6rem;align-items:flex-start}
+.info-box{background:linear-gradient(135deg,#eaf7e6,#d4f0c8);border-radius:10px;padding:1rem 1.1rem;font-size:.82rem;color:var(--green-dark);margin-bottom:1.1rem;line-height:1.6;border:1px solid #b8dfc7;display:flex;gap:.6rem;align-items:flex-start}
 .info-box-icon{font-size:1.1rem;flex-shrink:0;margin-top:.1rem}
 
 /* Progress steps */
@@ -179,7 +179,7 @@ textarea{resize:vertical;line-height:1.5}
   <div class="header-left">
     <div class="header-logo">🌱</div>
     <div>
-      <h1>ZEEUS Sustainability Tool</h1>
+      <h1><span style='color:#B9E021;font-weight:800;letter-spacing:-.02em'>ZEEUS</span> Sustainability Tool</h1>
       <span>Startup Evaluation · Powered by ESRS & UN SDGs</span>
     </div>
   </div>
