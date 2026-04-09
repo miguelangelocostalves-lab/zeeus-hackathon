@@ -30,6 +30,8 @@ db.exec(`
     country TEXT,
     stage TEXT,
     bizcat TEXT,
+    bizcat_main TEXT,
+    bizcat_sub TEXT,
     approach TEXT,
     prodservice TEXT,
     launched TEXT,
@@ -117,9 +119,9 @@ const server = http.createServer(async (req, res) => {
     const { basic, stage1, stage2, sdgs } = body;
 
     const info = db.prepare(`
-      INSERT INTO evaluations (name, country, stage, bizcat, approach, prodservice, launched, description)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(basic.name, basic.country, basic.stage, basic.bizcat, basic.approach, basic.prodservice, basic.launched, basic.description);
+      INSERT INTO evaluations (name, country, stage, bizcat, bizcat_main, bizcat_sub, approach, prodservice, launched, description)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(basic.name, basic.country, basic.stage, basic.bizcat, basic.bizcat_main, basic.bizcat_sub, basic.approach, basic.prodservice, basic.launched, basic.description);
 
     const evalId = info.lastInsertRowid;
 

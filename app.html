@@ -203,7 +203,10 @@ textarea{resize:vertical;line-height:1.5}
       <span>Startup Evaluation · Powered by ESRS & UN SDGs</span>
     </div>
   </div>
-  <div class="header-badge">Web Edition</div>
+  <div style="display:flex;align-items:center;gap:.75rem">
+    <button onclick="newEvaluation()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:.35rem .85rem;cursor:pointer;font-size:.8rem;font-weight:600">✨ New</button>
+    <div class="header-badge">Web Edition</div>
+  </div>
 </div>
 <div id="loaded-banner" style="display:none;background:#dbeafe;border-bottom:1px solid #93c5fd;padding:.5rem 1.5rem;align-items:center;justify-content:space-between;font-size:.83rem;color:#1e40af;gap:.75rem;flex-wrap:wrap">
   <span>📂 Loaded: <strong id="loaded-name"></strong></span>
@@ -1413,20 +1416,46 @@ function restoreFromRawInputs(rawInputs) {
     if(hidden) hidden.value = value;
   }
 
-  // Financial
+  // Financial - set value then refresh custom dropdown
   FINANCIAL_CRITERIA.forEach((_,i) => {
-    if(rawInputs['fin_'+i]) setSelectVal('fin_'+i, rawInputs['fin_'+i]);
+    const key = 'fin_'+i;
+    if(rawInputs[key]) {
+      const el = document.getElementById(key);
+      if(el) {
+        el.value = rawInputs[key];
+        // Refresh custom dropdown display
+        const wrap = el.closest('.z-select-wrap');
+        if(wrap) {
+          const btn = wrap.querySelector('.z-select-btn span');
+          if(btn) { btn.textContent = rawInputs[key]; btn.className = rawInputs[key] === 'Not Evaluated' ? 'placeholder' : ''; }
+        }
+      }
+    }
   });
 
   // Environmental, Social, Governance
   [['env', ENV_CRITERIA], ['soc', SOCIAL_CRITERIA], ['gov', GOV_CRITERIA]].forEach(([prefix, criteria]) => {
     criteria.forEach((_,i) => {
-      ['mag','scale','irrev'].forEach(dim => {
+      ['mag','scale','irrev','like'].forEach(dim => {
         const key = prefix+'_'+dim+'_'+i;
-        if(rawInputs[key]) restorePill(key, rawInputs[key]);
+        if(rawInputs[key]) {
+          // Try pill first, then select
+          const pills = document.getElementById(key+'_pills');
+          if(pills) {
+            restorePill(key, rawInputs[key]);
+          } else {
+            const el = document.getElementById(key);
+            if(el) {
+              el.value = rawInputs[key];
+              const wrap = el.closest && el.closest('.z-select-wrap');
+              if(wrap) {
+                const btn = wrap.querySelector('.z-select-btn span');
+                if(btn) { btn.textContent = rawInputs[key]; btn.className = ''; }
+              }
+            }
+          }
+        }
       });
-      const likeKey = prefix+'_like_'+i;
-      if(rawInputs[likeKey]) restorePill(likeKey, rawInputs[likeKey]);
     });
   });
 
@@ -1987,15 +2016,47 @@ async function loadEvaluation(id) {
 
     document.getElementById('name').value = evaluation.name || '';
     document.getElementById('country').value = evaluation.country || '';
-    document.getElementById('country-search').value = evaluation.country || '';
+    const csearch = document.getElementById('country-search');
+    if(csearch) csearch.value = evaluation.country || '';
     if(evaluation.country) applyCountryContext(evaluation.country);
-    document.getElementById('stage').value = evaluation.stage || '';
-    document.getElementById('bizcat').value = evaluation.bizcat?.startsWith('nace_') ? evaluation.bizcat : '';
-    document.getElementById('bizcat_main').value = !evaluation.bizcat?.startsWith('nace_') ? (evaluation.bizcat||'') : '';
-    document.getElementById('approach').value = evaluation.approach || '';
-    document.getElementById('prodservice').value = evaluation.prodservice || '';
-    document.getElementById('launched').value = evaluation.launched || '';
     document.getElementById('description').value = evaluation.description || '';
+
+    // Helper to set value and refresh custom dropdown
+    function setAndRefresh(id, value) {
+      const el = document.getElementById(id);
+      if(!el || !value) return;
+      el.value = value;
+      const wrap = el.closest && el.closest('.z-select-wrap');
+      if(wrap) {
+        const btn = wrap.querySelector('.z-select-btn span');
+        const selectedOpt = Array.from(el.options).find(o=>o.value===value);
+        if(btn && selectedOpt) {
+          btn.textContent = selectedOpt.text;
+          btn.className = '';
+        }
+      }
+    }
+
+    setAndRefresh('stage', evaluation.stage);
+    setAndRefresh('approach', evaluation.approach);
+    setAndRefresh('prodservice', evaluation.prodservice);
+    setAndRefresh('launched', evaluation.launched);
+
+    // Category fields
+    if(evaluation.bizcat?.startsWith('nace_')) {
+      setAndRefresh('bizcat', evaluation.bizcat);
+      updateSubcats();
+      setTimeout(() => {
+        if(evaluation.bizcat_sub) setAndRefresh('bizcat_sub', evaluation.bizcat_sub);
+      }, 100);
+    } else if(evaluation.bizcat) {
+      setAndRefresh('bizcat_main', evaluation.bizcat);
+    }
+    // Also try bizcat_main directly from evaluation
+    if(evaluation.bizcat_main) setAndRefresh('bizcat_main', evaluation.bizcat_main);
+
+    // Filter stage options based on launched
+    if(evaluation.launched) filterStageOptions();
 
     const envScores = Array(ENV_CRITERIA.length).fill(0);
     const socScores = Array(SOCIAL_CRITERIA.length).fill(0);
@@ -2160,6 +2221,7 @@ async function loadSavedEvaluations() {
           </div>
           <div style="display:flex;gap:.4rem">
             <button onclick="event.stopPropagation();loadEvaluation(${e.id})" style="background:#d1fae5;border:none;color:#065f46;border-radius:6px;padding:.3rem .6rem;cursor:pointer;font-size:.75rem;font-weight:600">Load</button>
+            <button onclick="event.stopPropagation();duplicateEvaluation(${e.id})" style="background:#dbeafe;border:none;color:#1e40af;border-radius:6px;padding:.3rem .6rem;cursor:pointer;font-size:.75rem;font-weight:600">Copy</button>
             <button onclick="event.stopPropagation();deleteEvaluation(${e.id})" style="background:#fee2e2;border:none;color:#b91c1c;border-radius:6px;padding:.3rem .6rem;cursor:pointer;font-size:.75rem">Delete</button>
           </div>
         </div>
@@ -2168,6 +2230,35 @@ async function loadSavedEvaluations() {
     }).join('');
   } catch(e) {
     div.innerHTML = '<p style="font-size:.82rem;color:#b91c1c">Could not load saved evaluations.</p>';
+  }
+}
+
+async function duplicateEvaluation(id) {
+  try {
+    const res = await fetch('/api/evaluations/' + id);
+    const data = await res.json();
+    const { evaluation, stage1, stage2, sdgs, rawInputs } = data;
+
+    // Create copy with modified name
+    const basic = {
+      name: (evaluation.name || 'Unnamed') + ' (copy)',
+      country: evaluation.country, stage: evaluation.stage,
+      bizcat: evaluation.bizcat, bizcat_main: evaluation.bizcat_main,
+      bizcat_sub: evaluation.bizcat_sub, approach: evaluation.approach,
+      prodservice: evaluation.prodservice, launched: evaluation.launched,
+      description: evaluation.description
+    };
+
+    const saveRes = await fetch('/api/evaluations', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({basic, stage1, stage2, sdgs, rawInputs})
+    });
+    const saved = await saveRes.json();
+    alert('✅ Copied as "' + basic.name + '" (ID: ' + saved.id + ')');
+    loadSavedEvaluations();
+  } catch(e) {
+    alert('Error copying: ' + e.message);
   }
 }
 
