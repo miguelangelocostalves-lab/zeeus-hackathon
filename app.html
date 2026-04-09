@@ -1313,7 +1313,9 @@ function buildDashboard() {
   if(avg(stage1Scores.envScores)>=1.5) extra.push(13,15);
   if(stage1Scores.socScores[0]>=1.5) extra.push(8);
   if(stage1Scores.socScores[3]>=1.5) extra.push(12);
-  allSDGs = [...new Set([...catSDGs,...extra])].sort((a,b)=>a-b);
+  // Add country/region-based SDGs
+  const countryBoost = window._countrySDGBoost || [];
+  allSDGs = [...new Set([...catSDGs,...extra,...countryBoost])].sort((a,b)=>a-b);
   const sdgDiv = document.getElementById('sdg-grid');
   sdgDiv.innerHTML = allSDGs.map(n=>`<div class="sdg-chip"><span class="num">${n}</span>${SDG_NAMES[n]||'SDG '+n}</div>`).join('');
 
@@ -1952,6 +1954,66 @@ const COUNTRIES = {
 };
 
 // Water stress countries (simplified)
+
+// ── Country Risk Data ─────────────────────────────────────────
+
+// High pollution risk countries (weak environmental regulation)
+const HIGH_POLLUTION_RISK = ['China','India','Indonesia','Bangladesh','Pakistan',
+  'Vietnam','Philippines','Nigeria','Ghana','Kenya','Ethiopia','Tanzania',
+  'Russia','Ukraine','Egypt','Algeria','Morocco','Brazil','Mexico'];
+
+// High fossil fuel dependency (climate risk)
+const HIGH_FOSSIL_DEPENDENCY = ['Saudi Arabia','United Arab Emirates','Qatar','Kuwait',
+  'Russia','Australia','Canada','United States','South Africa','India',
+  'China','Indonesia','Nigeria','Algeria','Kazakhstan'];
+
+// High supply chain labor risk (supply chain S2)
+const HIGH_SUPPLY_CHAIN_RISK = ['Bangladesh','Cambodia','Myanmar','Vietnam','India',
+  'Pakistan','Ethiopia','Nigeria','Ghana','Kenya','Indonesia','Philippines',
+  'China','Brazil','Mexico','Morocco','Tunisia','Egypt'];
+
+// High community conflict / inequality (S3)
+const HIGH_COMMUNITY_RISK = ['South Africa','Nigeria','Kenya','Ethiopia','Colombia',
+  'Brazil','Mexico','Peru','Bolivia','Indonesia','Philippines','Myanmar',
+  'Venezuela','Zimbabwe','Mozambique','Democratic Republic of Congo'];
+
+// High corruption index (G1) - based on Transparency International
+const HIGH_CORRUPTION_RISK = ['Nigeria','Kenya','Ethiopia','Tanzania','Uganda',
+  'Cameroon','Ghana','Bangladesh','Pakistan','Vietnam','Indonesia',
+  'Russia','Ukraine','Venezuela','Bolivia','Paraguay','Mexico',
+  'Egypt','Algeria','Morocco','Tunisia'];
+
+// Poor circular economy infrastructure (E5)
+const POOR_CIRCULAR_ECONOMY = ['Nigeria','Ethiopia','Tanzania','Uganda','Kenya',
+  'Bangladesh','Pakistan','Cambodia','Myanmar','Bolivia','Paraguay',
+  'Zimbabwe','Mozambique','Madagascar','Papua New Guinea'];
+
+// Regional SDG adjustments
+const REGIONAL_SDG_BOOST = {
+  'AF': [1, 2, 3, 6, 10],  // Africa: poverty, hunger, health, water, inequality
+  'AS': [2, 8, 9, 10],      // Asia: hunger, decent work, industry, inequality
+  'AM': [1, 8, 10, 13],     // Americas: poverty, work, inequality, climate
+  'ME': [6, 7, 13, 16],     // Middle East: water, energy, climate, peace
+  'EU': [7, 9, 11, 13, 17], // EU: energy, industry, cities, climate, partnerships
+  'OT': [13, 17]
+};
+
+function getCountryRisks(country) {
+  const risks = {};
+  if(HIGH_WATER_STRESS.includes(country))       risks.water = '💧 High water stress in your region — E3 Water criteria especially material';
+  if(HIGH_BIODIVERSITY_RISK.includes(country))  risks.bio   = '🌿 Biodiversity hotspot — E4 Biodiversity criteria especially material';
+  if(HIGH_POLLUTION_RISK.includes(country))     risks.poll  = '🏭 Elevated pollution risk in your region — E2 Pollution criteria especially material';
+  if(HIGH_FOSSIL_DEPENDENCY.includes(country))  risks.cc    = '🔥 High fossil fuel dependency — E1 Climate Change criteria especially material';
+  if(HIGH_SUPPLY_CHAIN_RISK.includes(country))  risks.sc    = '⛓️ Supply chain labour risk in your region — S2 Supply Chain criteria especially material';
+  if(HIGH_COMMUNITY_RISK.includes(country))     risks.comm  = '👥 High community conflict/inequality — S3 Communities criteria especially material';
+  if(HIGH_CORRUPTION_RISK.includes(country))    risks.corr  = '⚠️ Elevated corruption risk — G1 Corporate Ethics criteria especially material';
+  if(POOR_CIRCULAR_ECONOMY.includes(country))   risks.circ  = '♻️ Limited circular economy infrastructure — E5 Circular Economy criteria especially material';
+  return risks;
+}
+
+// Store current country risks globally
+let currentCountryRisks = {};
+
 const HIGH_WATER_STRESS = ['Morocco','Algeria','Tunisia','Egypt','Saudi Arabia',
   'United Arab Emirates','Qatar','Kuwait','Jordan','Israel','Spain','Italy',
   'Greece','Turkey','India','Pakistan','China','South Africa','Kenya','Ethiopia'];
@@ -1990,27 +2052,61 @@ function selectCountry(name) {
 
 function applyCountryContext(country) {
   const region = COUNTRIES[country] || 'OT';
-  const isEU = region === 'EU';
-  const isHighWater = HIGH_WATER_STRESS.includes(country);
-  const isHighBio = HIGH_BIODIVERSITY_RISK.includes(country);
+  currentCountryRisks = getCountryRisks(country);
 
-  // Remove existing country banners
+  // Remove existing banners
   document.querySelectorAll('.country-banner').forEach(b=>b.remove());
 
   const card = document.querySelector('#p0 .card');
   if(!card) return;
 
   const messages = [];
-  if(isEU) messages.push({icon:'🇪🇺', text:'<strong>CSRD applicable:</strong> As an EU-based startup, you may be subject to Corporate Sustainability Reporting Directive requirements as you scale.', color:'#dbeafe', border:'#3b82f6', textColor:'#1e40af'});
-  if(isHighWater) messages.push({icon:'💧', text:'<strong>High water stress region:</strong> Water-related impacts and risks are especially material in your country. Pay close attention to E3 (Water) criteria.', color:'#fef3c7', border:'#f59e0b', textColor:'#92400e'});
-  if(isHighBio) messages.push({icon:'🌿', text:'<strong>High biodiversity risk region:</strong> Your country is considered a biodiversity hotspot. E4 (Biodiversity) criteria may be especially relevant.', color:'#dcfce7', border:'#22c55e', textColor:'#15803d'});
+  if(region === 'EU') messages.push({text:'🇪🇺 <strong>CSRD applicable:</strong> As an EU-based startup, you may be subject to Corporate Sustainability Reporting Directive requirements as you scale.', color:'#dbeafe', border:'#3b82f6', textColor:'#1e40af'});
 
-  messages.forEach(m => {
-    const banner = document.createElement('div');
-    banner.className = 'country-banner';
-    banner.style.cssText = `background:${m.color};border-left:3px solid ${m.border};padding:.6rem .9rem;border-radius:0 8px 8px 0;font-size:.82rem;color:${m.textColor};margin-bottom:.5rem;line-height:1.5`;
-    banner.innerHTML = `${m.icon} ${m.text}`;
-    card.appendChild(banner);
+  Object.values(currentCountryRisks).forEach(msg => {
+    messages.push({text:msg, color:'#fef9e7', border:'#f59e0b', textColor:'#92400e'});
+  });
+
+  if(messages.length > 0) {
+    const summary = document.createElement('div');
+    summary.className = 'country-banner';
+    summary.style.cssText = 'background:#f0f7f2;border:1px solid #8CC63F;border-radius:8px;padding:.75rem 1rem;margin-bottom:.5rem;font-size:.82rem;line-height:1.8';
+    summary.innerHTML = '<div style="font-weight:600;color:#3FA535;margin-bottom:.35rem">📍 Context for ' + country + '</div>' +
+      messages.map(m=>`<div style="color:${m.textColor};margin-bottom:.2rem">${m.text}</div>`).join('');
+    card.appendChild(summary);
+  }
+
+  // Update Stage I with country risk indicators
+  updateStage1CountryHints();
+
+  // Boost regional SDGs
+  const boostSDGs = REGIONAL_SDG_BOOST[region] || [];
+  window._countrySDGBoost = boostSDGs;
+}
+
+function updateStage1CountryHints() {
+  // Remove old hints
+  document.querySelectorAll('.country-hint').forEach(h=>h.remove());
+
+  const hintMap = {
+    water: 'env_0', poll: 'env_1', bio: 'env_2', circ: 'env_3', cc: 'env_4',
+    sc: 'soc_1', comm: 'soc_2', corr: 'gov_0'
+  };
+
+  Object.entries(currentCountryRisks).forEach(([key, msg]) => {
+    const prefix = hintMap[key];
+    if(!prefix) return;
+    // Find the impact item for this criterion
+    const selEl = document.getElementById(prefix + '_mag_0') ||
+                  document.querySelector(`[id^="${prefix}_mag_"]`);
+    if(!selEl) return;
+    const item = selEl.closest('.impact-item');
+    if(!item) return;
+    const hint = document.createElement('div');
+    hint.className = 'country-hint';
+    hint.style.cssText = 'background:#fef3c7;border-left:2px solid #f59e0b;padding:.3rem .6rem;border-radius:0 6px 6px 0;font-size:.75rem;color:#92400e;margin-top:.3rem';
+    hint.textContent = msg;
+    item.appendChild(hint);
   });
 }
 
@@ -2133,6 +2229,7 @@ function initZSelects() {
 // ── Init ──────────────────────────────────────────────────────
 buildStage1UI();
 buildStage2UI();
+if(Object.keys(currentCountryRisks).length) updateStage1CountryHints();
 setTimeout(initZSelects, 100);
 </script>
 </body>
