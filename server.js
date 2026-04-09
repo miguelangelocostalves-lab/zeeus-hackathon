@@ -115,34 +115,49 @@ const server = http.createServer(async (req, res) => {
 
   // ── Save evaluation ─────────────────────────────────────
   if (req.method === 'POST' && req.url === '/api/evaluations') {
-    const body = await parseBody(req);
-    const { basic, stage1, stage2, sdgs } = body;
+    try {
+      const body = await parseBody(req);
+      const { basic, stage1, stage2, sdgs } = body;
 
-    const info = db.prepare(`
-      INSERT INTO evaluations (name, country, stage, bizcat, bizcat_main, bizcat_sub, approach, prodservice, launched, description)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(basic.name, basic.country, basic.stage, basic.bizcat, basic.bizcat_main, basic.bizcat_sub, basic.approach, basic.prodservice, basic.launched, basic.description);
+      const info = db.prepare(`
+        INSERT INTO evaluations (name, country, stage, bizcat, bizcat_main, bizcat_sub, approach, prodservice, launched, description)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        basic.name || 'Unnamed',
+        basic.country || null,
+        basic.stage || null,
+        basic.bizcat || null,
+        basic.bizcat_main || null,
+        basic.bizcat_sub || null,
+        basic.approach || null,
+        basic.prodservice || null,
+        basic.launched || null,
+        basic.description || null
+      );
 
-    const evalId = info.lastInsertRowid;
+      const evalId = info.lastInsertRowid;
 
-    const insertScore1 = db.prepare('INSERT INTO stage1_scores (evaluation_id, dimension, criterion, score) VALUES (?, ?, ?, ?)');
-    for (const s of stage1) insertScore1.run(evalId, s.dimension, s.criterion, s.score);
+      const insertScore1 = db.prepare('INSERT INTO stage1_scores (evaluation_id, dimension, criterion, score) VALUES (?, ?, ?, ?)');
+      for (const s of (stage1 || [])) insertScore1.run(evalId, s.dimension, s.criterion, s.score);
 
-    const insertScore2 = db.prepare('INSERT INTO stage2_scores (evaluation_id, type, category, score) VALUES (?, ?, ?, ?)');
-    for (const s of stage2) insertScore2.run(evalId, s.type, s.category, s.score);
+      const insertScore2 = db.prepare('INSERT INTO stage2_scores (evaluation_id, type, category, score) VALUES (?, ?, ?, ?)');
+      for (const s of (stage2 || [])) insertScore2.run(evalId, s.type, s.category, s.score);
 
-    const insertSDG = db.prepare('INSERT INTO sdg_mappings (evaluation_id, sdg_number, source) VALUES (?, ?, ?)');
-    for (const s of sdgs) insertSDG.run(evalId, s.number, s.source);
+      const insertSDG = db.prepare('INSERT INTO sdg_mappings (evaluation_id, sdg_number, source) VALUES (?, ?, ?)');
+      for (const s of (sdgs || [])) insertSDG.run(evalId, s.number || s.sdg_number, s.source || 'auto');
 
-    // Save raw inputs if provided
-    if (body.rawInputs) {
-      const insertRaw = db.prepare('INSERT INTO raw_inputs (evaluation_id, input_key, input_value) VALUES (?, ?, ?)');
-      for (const [key, value] of Object.entries(body.rawInputs)) {
-        insertRaw.run(evalId, key, String(value));
+      if (body.rawInputs) {
+        const insertRaw = db.prepare('INSERT INTO raw_inputs (evaluation_id, input_key, input_value) VALUES (?, ?, ?)');
+        for (const [key, value] of Object.entries(body.rawInputs)) {
+          insertRaw.run(evalId, key, String(value || ''));
+        }
       }
-    }
 
-    jsonRes(res, 201, { id: evalId, message: 'Evaluation saved successfully' });
+      jsonRes(res, 201, { id: evalId, message: 'Evaluation saved successfully' });
+    } catch(err) {
+      console.error('Save error:', err.message);
+      jsonRes(res, 500, { error: err.message });
+    }
     return;
   }
 
