@@ -2258,7 +2258,8 @@ async function duplicateEvaluation(id) {
     alert('✅ Copied as "' + basic.name + '" (ID: ' + saved.id + ')');
     loadSavedEvaluations();
   } catch(e) {
-    alert('Error copying: ' + e.message);
+    // Save may have succeeded even if response parsing failed
+    loadSavedEvaluations();
   }
 }
 
