@@ -2236,10 +2236,10 @@ async function loadSavedEvaluations() {
 async function duplicateEvaluation(id) {
   try {
     const res = await fetch('/api/evaluations/' + id);
+    if(!res.ok) throw new Error('fetch failed');
     const data = await res.json();
     const { evaluation, stage1, stage2, sdgs, rawInputs } = data;
 
-    // Create copy with modified name
     const basic = {
       name: (evaluation.name || 'Unnamed') + ' (copy)',
       country: evaluation.country, stage: evaluation.stage,
@@ -2249,17 +2249,15 @@ async function duplicateEvaluation(id) {
       description: evaluation.description
     };
 
-    const saveRes = await fetch('/api/evaluations', {
+    await fetch('/api/evaluations', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({basic, stage1, stage2, sdgs, rawInputs})
+      body: JSON.stringify({basic, stage1, stage2, sdgs, rawInputs: rawInputs||{}})
     });
-    const saved = await saveRes.json();
-    alert('✅ Copied as "' + basic.name + '" (ID: ' + saved.id + ')');
-    loadSavedEvaluations();
+
+    await loadSavedEvaluations();
   } catch(e) {
-    // Save may have succeeded even if response parsing failed
-    loadSavedEvaluations();
+    await loadSavedEvaluations();
   }
 }
 
