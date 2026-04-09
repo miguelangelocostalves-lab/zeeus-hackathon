@@ -1115,19 +1115,24 @@ function rebuildChart() {
   if(currentChartType==='radar'){
     const radarLabels = ['Environmental','Social','Governance','Financial'];
     const radarVals = [avg(envScores), avg(socScores), avg(govScores), stage1Scores.finAvg];
+    const radarThresholdPlugin = {id:'radarThreshold',afterDraw(chart){const ctx2=chart.ctx,r=chart.scales.r;if(!r)return;ctx2.save();ctx2.strokeStyle='rgba(245,158,11,0.9)';ctx2.lineWidth=2;ctx2.setLineDash([6,3]);const pts=chart.data.labels.map((_,i)=>{const angle=r.getIndexAngle(i)-Math.PI/2;const d=r.getDistanceFromCenterForValue(2.5);return{x:r.xCenter+Math.cos(angle)*d,y:r.yCenter+Math.sin(angle)*d};});if(pts.length>0){ctx2.beginPath();ctx2.moveTo(pts[0].x,pts[0].y);pts.forEach(p=>ctx2.lineTo(p.x,p.y));ctx2.closePath();ctx2.stroke();}ctx2.restore();}};
     chartInstance = new Chart(ctx,{
       type:'radar',
       data:{labels:radarLabels,datasets:[{label:'Score',data:radarVals.map(v=>parseFloat(v.toFixed(2))),backgroundColor:'rgba(52,196,124,0.2)',borderColor:'rgba(26,92,52,0.8)',borderWidth:2,pointBackgroundColor:'#1a5c34',pointRadius:5}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},afterDraw(chart){const ctx2=chart.ctx,r=chart.scales.r;if(!r)return;ctx2.save();ctx2.strokeStyle='rgba(245,158,11,0.9)';ctx2.lineWidth=2;ctx2.setLineDash([6,3]);const pts=chart.data.labels.map((_,i)=>{const angle=r.getIndexAngle(i)-Math.PI/2;const d=r.getDistanceFromCenterForValue(2.5);return{x:r.xCenter+Math.cos(angle)*d,y:r.yCenter+Math.sin(angle)*d};});if(pts.length>0){ctx2.beginPath();ctx2.moveTo(pts[0].x,pts[0].y);pts.forEach(p=>ctx2.lineTo(p.x,p.y));ctx2.closePath();ctx2.stroke();}ctx2.restore();},scales:{r:{min:0,max:4,ticks:{stepSize:1,font:{size:10}},grid:{color:'rgba(0,0,0,0.07)'},pointLabels:{font:{size:11,weight:'600'}}}}}
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:4,ticks:{stepSize:1,font:{size:10}},grid:{color:'rgba(0,0,0,0.07)'},pointLabels:{font:{size:11,weight:'600'}}}}},
+      plugins:[radarThresholdPlugin]
     });
   } else if(currentChartType==='polarArea'){
     const polarLabels = [...ENV_CRITERIA.map(c=>c.name.split(' ')[0]), ...SOCIAL_CRITERIA.map(c=>c.name.split('(')[0].trim()), ...GOV_CRITERIA.map(c=>c.name.split('(')[0].trim())];
+    const polarThresholdPlugin = {id:'polarThreshold',afterDraw(chart){const ctx2=chart.ctx,r=chart.scales.r;if(!r)return;ctx2.save();ctx2.strokeStyle='rgba(245,158,11,0.9)';ctx2.lineWidth=2;ctx2.setLineDash([6,3]);const d=r.getDistanceFromCenterForValue(2.5);ctx2.beginPath();ctx2.arc(r.xCenter,r.yCenter,d,0,2*Math.PI);ctx2.stroke();ctx2.fillStyle='rgba(245,158,11,0.9)';ctx2.font='10px sans-serif';ctx2.fillText('2.5',r.xCenter+d+4,r.yCenter);ctx2.restore();}};
     chartInstance = new Chart(ctx,{
       type:'polarArea',
       data:{labels:polarLabels,datasets:[{data:allVals.map(v=>parseFloat(v.toFixed(2))),backgroundColor:colors,borderWidth:1,borderColor:'rgba(255,255,255,.5)'}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:12}},afterDraw(chart){const ctx2=chart.ctx,r=chart.scales.r;if(!r)return;ctx2.save();ctx2.strokeStyle='rgba(245,158,11,0.9)';ctx2.lineWidth=2;ctx2.setLineDash([6,3]);const d=r.getDistanceFromCenterForValue(2.5);ctx2.beginPath();ctx2.arc(r.xCenter,r.yCenter,d,0,2*Math.PI);ctx2.stroke();ctx2.fillStyle='rgba(245,158,11,0.9)';ctx2.font='10px sans-serif';ctx2.fillText('2.5',r.xCenter+d+4,r.yCenter);ctx2.restore();},scales:{r:{min:0,max:4,ticks:{display:false}}}}
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:12}}},scales:{r:{min:0,max:4,ticks:{display:false}}}},
+      plugins:[polarThresholdPlugin]
     });
   } else {
+    const barThresholdPlugin = {id:'barThreshold',afterDraw(chart){const ctx2=chart.ctx,y=chart.scales.y;if(!y)return;const yPx=y.getPixelForValue(2.5);ctx2.save();ctx2.strokeStyle='rgba(245,158,11,0.9)';ctx2.lineWidth=2;ctx2.setLineDash([6,3]);ctx2.beginPath();ctx2.moveTo(chart.chartArea.left,yPx);ctx2.lineTo(chart.chartArea.right,yPx);ctx2.stroke();ctx2.setLineDash([]);ctx2.fillStyle='#92400e';ctx2.font='bold 10px sans-serif';ctx2.fillText('Materiality 2.5',chart.chartArea.right-90,yPx-4);ctx2.restore();}};
     chartInstance = new Chart(ctx,{
       type:'bar',
       data:{labels:allLabels,datasets:[{label:'Impact Score',data:allVals.map(v=>parseFloat(v.toFixed(2))),backgroundColor:colors,borderRadius:6,borderSkipped:false}]},
