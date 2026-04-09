@@ -2016,13 +2016,40 @@ async function loadEvaluation(id) {
     const csearch = document.getElementById('country-search');
     if(csearch) csearch.value = evaluation.country || '';
     if(evaluation.country) applyCountryContext(evaluation.country);
-    document.getElementById('stage').value = evaluation.stage || '';
-    document.getElementById('bizcat').value = evaluation.bizcat?.startsWith('nace_') ? evaluation.bizcat : '';
-    document.getElementById('bizcat_main').value = !evaluation.bizcat?.startsWith('nace_') ? (evaluation.bizcat||'') : '';
-    document.getElementById('approach').value = evaluation.approach || '';
-    document.getElementById('prodservice').value = evaluation.prodservice || '';
-    document.getElementById('launched').value = evaluation.launched || '';
     document.getElementById('description').value = evaluation.description || '';
+
+    // Helper to set value and refresh custom dropdown
+    function setAndRefresh(id, value) {
+      const el = document.getElementById(id);
+      if(!el || !value) return;
+      el.value = value;
+      const wrap = el.closest && el.closest('.z-select-wrap');
+      if(wrap) {
+        const btn = wrap.querySelector('.z-select-btn span');
+        const selectedOpt = Array.from(el.options).find(o=>o.value===value);
+        if(btn && selectedOpt) {
+          btn.textContent = selectedOpt.text;
+          btn.className = '';
+        }
+      }
+    }
+
+    setAndRefresh('stage', evaluation.stage);
+    setAndRefresh('approach', evaluation.approach);
+    setAndRefresh('prodservice', evaluation.prodservice);
+    setAndRefresh('launched', evaluation.launched);
+
+    // Category fields
+    if(evaluation.bizcat?.startsWith('nace_')) {
+      setAndRefresh('bizcat', evaluation.bizcat);
+      updateSubcats();
+      if(evaluation.bizcat_sub) setAndRefresh('bizcat_sub', evaluation.bizcat_sub);
+    } else {
+      setAndRefresh('bizcat_main', evaluation.bizcat);
+    }
+
+    // Filter stage options based on launched
+    if(evaluation.launched) filterStageOptions();
 
     const envScores = Array(ENV_CRITERIA.length).fill(0);
     const socScores = Array(SOCIAL_CRITERIA.length).fill(0);
