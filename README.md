@@ -201,3 +201,28 @@ CREATE TABLE sdg_mappings (
 ---
 
 Supported by ClimateKIC · Funded by the European Union · EIT Higher Education Initiative
+
+---
+
+## Post-Hackathon Roadmap
+
+### Phase 1 — Foundation (Months 1–3)
+- **User authentication** — secure login/register with role-based access (user vs admin)
+- **PostgreSQL migration** — production-grade database replacing SQLite
+- **Security hardening** — HTTPS, input sanitisation, password hashing, audit logs, GDPR compliance
+- **Responsive mobile UI** — optimised for smartphones and tablets
+
+### Phase 2 — Enhancement (Months 4–6)
+- **AI recommendations** — full LLM integration for personalised sustainability recommendations
+- **Advanced analytics** — industry benchmarking, trend analysis, cohort comparisons
+- **Professional PDF reports** — branded reports with ZEEUS visual identity and charts
+- **Babele platform integration** — direct API sync with startup profiles
+
+### Phase 3 — Scale (Months 7–12)
+- **Multi-language support** — Portuguese, German, French, Swahili
+- **Admin dashboard** — institution-level oversight for Seed Factory managers
+- **Public REST API** — third-party integrations for HEIs and accelerators
+- **Cloud deployment** — AWS/Azure/GCP with auto-scaling and 99.9% uptime
+
+### Long-term Vision
+The tool aims to become the standard sustainability assessment framework for impact-driven startups across the ZEEUS Global North-to-South network, with full CSRD compliance reporting, ESG data provider integrations, and a sustainability certification pathway aligned with ESRS standards.
