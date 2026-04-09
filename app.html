@@ -225,13 +225,13 @@ textarea{resize:vertical;line-height:1.5}
     <div class="card-header"><div class="card-icon green">📋</div><div><h2>Basic information about your startup</h2><div class="card-sub">Fill in the details about your startup or idea</div></div></div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:.85rem">
       <div><label>Startup / Idea name</label><input type="text" id="name" placeholder="e.g. GreenFleet"></div>
-      <div><label>Country</label>
-        <select id="country">
-          <option value="">Select country…</option>
-          <option>Portugal</option><option>Germany</option><option>France</option><option>Netherlands</option>
-          <option>Sweden</option><option>Spain</option><option>Italy</option><option>South Africa</option>
-          <option>Kenya</option><option>Nigeria</option><option>Other</option>
-        </select>
+      <div>
+        <label>Country</label>
+        <div style="position:relative">
+          <input type="text" id="country-search" placeholder="Search country…" autocomplete="off" onInput="filterCountries()" onFocus="showCountryList()" style="width:100%">
+          <div id="country-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #39B54A;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:1000;max-height:200px;overflow-y:auto"></div>
+        </div>
+        <input type="hidden" id="country" value="">
       </div>
       <div><label>Business category (Main)</label>
         <select id="bizcat_main" onchange="syncMainCat()">
@@ -1694,7 +1694,7 @@ async function saveEvaluation() {
 
   const basic = {
     name: document.getElementById('name').value || 'Unnamed',
-    country: document.getElementById('country').value,
+    country: document.getElementById('country').value || document.getElementById('country-search').value,
     stage: document.getElementById('stage').value,
     bizcat: document.getElementById('bizcat').value || document.getElementById('bizcat_main').value,
     approach: document.getElementById('approach').value,
@@ -1755,6 +1755,8 @@ async function loadEvaluation(id) {
 
     document.getElementById('name').value = evaluation.name || '';
     document.getElementById('country').value = evaluation.country || '';
+    document.getElementById('country-search').value = evaluation.country || '';
+    if(evaluation.country) applyCountryContext(evaluation.country);
     document.getElementById('stage').value = evaluation.stage || '';
     document.getElementById('bizcat').value = evaluation.bizcat?.startsWith('nace_') ? evaluation.bizcat : '';
     document.getElementById('bizcat_main').value = !evaluation.bizcat?.startsWith('nace_') ? (evaluation.bizcat||'') : '';
@@ -1919,6 +1921,104 @@ async function deleteEvaluation(id) {
 // ── Custom Dropdowns ──────────────────────────────────────────
 
 
+
+const COUNTRIES = {
+  // EU/EEA (CSRD applicable)
+  'Austria':'EU','Belgium':'EU','Bulgaria':'EU','Croatia':'EU','Cyprus':'EU',
+  'Czech Republic':'EU','Denmark':'EU','Estonia':'EU','Finland':'EU','France':'EU',
+  'Germany':'EU','Greece':'EU','Hungary':'EU','Ireland':'EU','Italy':'EU',
+  'Latvia':'EU','Lithuania':'EU','Luxembourg':'EU','Malta':'EU','Netherlands':'EU',
+  'Poland':'EU','Portugal':'EU','Romania':'EU','Slovakia':'EU','Slovenia':'EU',
+  'Spain':'EU','Sweden':'EU','Iceland':'EU','Liechtenstein':'EU','Norway':'EU',
+  // Africa
+  'South Africa':'AF','Kenya':'AF','Nigeria':'AF','Ghana':'AF','Ethiopia':'AF',
+  'Tanzania':'AF','Uganda':'AF','Rwanda':'AF','Senegal':'AF','Morocco':'AF',
+  'Egypt':'AF','Tunisia':'AF','Algeria':'AF','Mozambique':'AF','Zambia':'AF',
+  'Zimbabwe':'AF','Botswana':'AF','Namibia':'AF','Cameroon':'AF','Côte d\'Ivoire':'AF',
+  // Americas
+  'United States':'AM','Canada':'AM','Brazil':'AM','Mexico':'AM','Argentina':'AM',
+  'Colombia':'AM','Chile':'AM','Peru':'AM','Ecuador':'AM','Bolivia':'AM',
+  'Uruguay':'AM','Paraguay':'AM','Venezuela':'AM','Costa Rica':'AM','Panama':'AM',
+  // Asia/Pacific
+  'China':'AS','India':'AS','Japan':'AS','South Korea':'AS','Singapore':'AS',
+  'Indonesia':'AS','Malaysia':'AS','Thailand':'AS','Vietnam':'AS','Philippines':'AS',
+  'Bangladesh':'AS','Pakistan':'AS','Australia':'AS','New Zealand':'AS',
+  'New Zealand':'AS','Hong Kong':'AS','Taiwan':'AS',
+  // Middle East
+  'United Arab Emirates':'ME','Saudi Arabia':'ME','Israel':'ME','Turkey':'ME',
+  'Qatar':'ME','Kuwait':'ME','Jordan':'ME','Lebanon':'ME',
+  // Other
+  'United Kingdom':'OT','Switzerland':'OT','Russia':'OT','Ukraine':'OT'
+};
+
+// Water stress countries (simplified)
+const HIGH_WATER_STRESS = ['Morocco','Algeria','Tunisia','Egypt','Saudi Arabia',
+  'United Arab Emirates','Qatar','Kuwait','Jordan','Israel','Spain','Italy',
+  'Greece','Turkey','India','Pakistan','China','South Africa','Kenya','Ethiopia'];
+
+// High biodiversity risk countries
+const HIGH_BIODIVERSITY_RISK = ['Brazil','Indonesia','Colombia','Peru','Ecuador',
+  'Congo','Cameroon','Madagascar','Philippines','Malaysia','Papua New Guinea',
+  'Vietnam','India','Mexico','South Africa'];
+
+function filterCountries() {
+  const q = document.getElementById('country-search').value.toLowerCase();
+  const drop = document.getElementById('country-dropdown');
+  if(!q) { drop.style.display='none'; return; }
+  const matches = Object.keys(COUNTRIES).filter(c=>c.toLowerCase().includes(q)).slice(0,10);
+  if(!matches.length) { drop.style.display='none'; return; }
+  drop.style.display='block';
+  drop.innerHTML = matches.map(c=>`
+    <div onclick="selectCountry('${c}')" style="padding:.5rem .85rem;font-size:.88rem;cursor:pointer;transition:.1s" 
+         onmouseover="this.style.background='#eaf7e6';this.style.color='#00654A'" 
+         onmouseout="this.style.background='';this.style.color=''">
+      ${c} <span style="font-size:.75rem;color:#9ca3af">${COUNTRIES[c]==='EU'?'🇪🇺 CSRD applicable':''}</span>
+    </div>`).join('');
+}
+
+function showCountryList() {
+  const q = document.getElementById('country-search').value;
+  if(q) filterCountries();
+}
+
+function selectCountry(name) {
+  document.getElementById('country-search').value = name;
+  document.getElementById('country').value = name;
+  document.getElementById('country-dropdown').style.display='none';
+  applyCountryContext(name);
+}
+
+function applyCountryContext(country) {
+  const region = COUNTRIES[country] || 'OT';
+  const isEU = region === 'EU';
+  const isHighWater = HIGH_WATER_STRESS.includes(country);
+  const isHighBio = HIGH_BIODIVERSITY_RISK.includes(country);
+
+  // Remove existing country banners
+  document.querySelectorAll('.country-banner').forEach(b=>b.remove());
+
+  const card = document.querySelector('#p0 .card');
+  if(!card) return;
+
+  const messages = [];
+  if(isEU) messages.push({icon:'🇪🇺', text:'<strong>CSRD applicable:</strong> As an EU-based startup, you may be subject to Corporate Sustainability Reporting Directive requirements as you scale.', color:'#dbeafe', border:'#3b82f6', textColor:'#1e40af'});
+  if(isHighWater) messages.push({icon:'💧', text:'<strong>High water stress region:</strong> Water-related impacts and risks are especially material in your country. Pay close attention to E3 (Water) criteria.', color:'#fef3c7', border:'#f59e0b', textColor:'#92400e'});
+  if(isHighBio) messages.push({icon:'🌿', text:'<strong>High biodiversity risk region:</strong> Your country is considered a biodiversity hotspot. E4 (Biodiversity) criteria may be especially relevant.', color:'#dcfce7', border:'#22c55e', textColor:'#15803d'});
+
+  messages.forEach(m => {
+    const banner = document.createElement('div');
+    banner.className = 'country-banner';
+    banner.style.cssText = `background:${m.color};border-left:3px solid ${m.border};padding:.6rem .9rem;border-radius:0 8px 8px 0;font-size:.82rem;color:${m.textColor};margin-bottom:.5rem;line-height:1.5`;
+    banner.innerHTML = `${m.icon} ${m.text}`;
+    card.appendChild(banner);
+  });
+}
+
+document.addEventListener('click', e => {
+  if(!e.target.closest('#country-search') && !e.target.closest('#country-dropdown')) {
+    document.getElementById('country-dropdown').style.display='none';
+  }
+});
 function filterStageOptions() {
   const launched = document.getElementById('launched').value;
   const stageSelect = document.getElementById('stage');
