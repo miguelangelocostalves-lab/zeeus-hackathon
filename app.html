@@ -1390,6 +1390,184 @@ function scoreBadgeHtml(s) {
   const {label, color, bg} = scoreLabel(s);
   return `<span style="background:${bg};color:${color};font-size:.72rem;font-weight:700;padding:.15rem .5rem;border-radius:10px">${label} (${s.toFixed(2)})</span>`;
 }
+
+function restoreFromRawInputs(rawInputs) {
+  function setSelectVal(id, value) {
+    const el = document.getElementById(id);
+    if(el) el.value = value;
+  }
+  function restorePill(id, value) {
+    const group = document.getElementById(id+'_pills');
+    if(!group) return;
+    const PILL_CLASS_MAP = {
+      'N/A':'selected-na','Low':'selected-low','Moderate':'selected-mod',
+      'Significant':'selected-sig','High':'selected-high',
+      'Very likely':'selected-vlikely','Likely':'selected-sig',
+      'Could occur':'selected-couldoccur','Rare':'selected-rare',
+      'Very unlikely':'selected-vunlikely','Unlikely':'selected-unlikely'
+    };
+    group.querySelectorAll('.pill').forEach(p => {
+      p.className = 'pill ' + (p.dataset.val === value ? (PILL_CLASS_MAP[value]||'') : '');
+    });
+    const hidden = document.getElementById(id);
+    if(hidden) hidden.value = value;
+  }
+
+  // Financial
+  FINANCIAL_CRITERIA.forEach((_,i) => {
+    if(rawInputs['fin_'+i]) setSelectVal('fin_'+i, rawInputs['fin_'+i]);
+  });
+
+  // Environmental, Social, Governance
+  [['env', ENV_CRITERIA], ['soc', SOCIAL_CRITERIA], ['gov', GOV_CRITERIA]].forEach(([prefix, criteria]) => {
+    criteria.forEach((_,i) => {
+      ['mag','scale','irrev'].forEach(dim => {
+        const key = prefix+'_'+dim+'_'+i;
+        if(rawInputs[key]) restorePill(key, rawInputs[key]);
+      });
+      const likeKey = prefix+'_like_'+i;
+      if(rawInputs[likeKey]) restorePill(likeKey, rawInputs[likeKey]);
+    });
+  });
+
+  // Risks
+  RISKS.forEach((_,i) => {
+    if(rawInputs['risk_prob_'+i]) restorePill('risk_prob_'+i, rawInputs['risk_prob_'+i]);
+    if(rawInputs['risk_imp_'+i]) restorePill('risk_imp_'+i, rawInputs['risk_imp_'+i]);
+    if(rawInputs['risk_na_'+i] === 'yes') {
+      const cb = document.getElementById('risk_na_cb_'+i);
+      const na = document.getElementById('risk_na_'+i);
+      if(cb) cb.checked = true;
+      if(na) na.value = 'yes';
+    }
+  });
+
+  // Opportunities
+  OPPS.forEach((_,i) => {
+    if(rawInputs['opp_like_'+i]) restorePill('opp_like_'+i, rawInputs['opp_like_'+i]);
+    if(rawInputs['opp_imp_'+i]) restorePill('opp_imp_'+i, rawInputs['opp_imp_'+i]);
+    if(rawInputs['opp_na_'+i] === 'yes') {
+      const cb = document.getElementById('opp_na_cb_'+i);
+      const na = document.getElementById('opp_na_'+i);
+      if(cb) cb.checked = true;
+      if(na) na.value = 'yes';
+    }
+  });
+}
+
+function restoreStage1Visuals(envScores, socScores, govScores) {
+  const MAG_MAP = {0:'N/A', 1:'Low', 2:'Moderate', 3:'Significant', 4:'High'};
+  const LIKE_MAP = {0:'N/A', 0.25:'Unlikely', 0.5:'Unlikely', 0.75:'Likely', 1:'Very likely'};
+
+  function restoreImpactItem(prefix, i, score) {
+    if(score === 0) {
+      // Set all to N/A
+      ['mag','scale','irrev','like'].forEach(dim => {
+        const el = document.getElementById(prefix+'_'+dim+'_'+i);
+        if(el) { el.value = 'N/A'; restorePillGroup(prefix+'_'+dim+'_'+i, 'N/A'); }
+      });
+      return;
+    }
+    // Reverse: assume likelihood=1 (Very likely), then mag=scale=irrev = score
+    // score = ((m+s+r)/3) * l => m+s+r = score*3/l
+    // Use l=0.75 (Likely) as default, then mag=score/0.75 rounded
+    const l = 0.75;
+    const msr = Math.min(4, Math.max(1, Math.round(score / l)));
+    const magVal = MAG_MAP[msr] || 'Moderate';
+    ['mag','scale','irrev'].forEach(dim => {
+      const el = document.getElementById(prefix+'_'+dim+'_'+i);
+      if(el) { el.value = magVal; restorePillGroup(prefix+'_'+dim+'_'+i, magVal); }
+    });
+    const likeEl = document.getElementById(prefix+'_like_'+i);
+    if(likeEl) { likeEl.value = 'Likely'; restorePillGroup(prefix+'_like_'+i, 'Likely'); }
+  }
+
+  function restorePillGroup(id, value) {
+    const group = document.getElementById(id+'_pills');
+    if(!group) return;
+    const pills = group.querySelectorAll('.pill');
+    const PILL_CLASS_MAP = {
+      'N/A':'selected-na','Low':'selected-low','Moderate':'selected-mod',
+      'Significant':'selected-sig','High':'selected-high',
+      'Very unlikely':'selected-vunlikely','Unlikely':'selected-unlikely',
+      'Likely':'selected-sig','Very likely':'selected-vlikely',
+      'Rare':'selected-rare','Could occur':'selected-couldoccur'
+    };
+    pills.forEach(p => {
+      p.className = 'pill ' + (p.dataset.val === value ? (PILL_CLASS_MAP[value]||'') : '');
+    });
+    const hidden = document.getElementById(id);
+    if(hidden) hidden.value = value;
+  }
+
+  envScores.forEach((score,i) => restoreImpactItem('env', i, score));
+  socScores.forEach((score,i) => restoreImpactItem('soc', i, score));
+  govScores.forEach((score,i) => restoreImpactItem('gov', i, score));
+}
+
+function restoreStage2Visuals(riskScores, oppScores) {
+  // Reverse risk matrix to find prob/impact combination
+  const RISK_REVERSE = {
+    0: {prob:'N/A', imp:'N/A'},
+    1: {prob:'Rare', imp:'Low'},
+    2: {prob:'Could occur', imp:'Moderate'},
+    3: {prob:'Likely', imp:'Significant'},
+    4: {prob:'Very likely', imp:'High'}
+  };
+  const OPP_REVERSE = {
+    0: {like:'N/A', imp:'N/A'},
+    1: {like:'Rare', imp:'Low'},
+    2: {like:'Could occur', imp:'Moderate'},
+    3: {like:'Likely', imp:'Significant'},
+    4: {like:'Very likely', imp:'High'}
+  };
+
+  function restorePill(id, value) {
+    const group = document.getElementById(id+'_pills');
+    if(!group) return;
+    const PILL_CLASS_MAP = {
+      'N/A':'selected-na','Low':'selected-low','Moderate':'selected-mod',
+      'Significant':'selected-sig','High':'selected-high',
+      'Very likely':'selected-vlikely','Likely':'selected-sig',
+      'Could occur':'selected-couldoccur','Rare':'selected-rare'
+    };
+    group.querySelectorAll('.pill').forEach(p => {
+      p.className = 'pill ' + (p.dataset.val === value ? (PILL_CLASS_MAP[value]||'') : '');
+    });
+    const hidden = document.getElementById(id);
+    if(hidden) hidden.value = value;
+  }
+
+  riskScores.forEach((score, i) => {
+    if(score === 0) {
+      const cb = document.getElementById('risk_na_cb_'+i);
+      const na = document.getElementById('risk_na_'+i);
+      if(cb) cb.checked = true;
+      if(na) na.value = 'yes';
+      restorePill('risk_prob_'+i, 'N/A');
+      restorePill('risk_imp_'+i, 'N/A');
+    } else {
+      const r = RISK_REVERSE[score] || RISK_REVERSE[2];
+      restorePill('risk_prob_'+i, r.prob);
+      restorePill('risk_imp_'+i, r.imp);
+    }
+  });
+
+  oppScores.forEach((score, i) => {
+    if(score === 0) {
+      const cb = document.getElementById('opp_na_cb_'+i);
+      const na = document.getElementById('opp_na_'+i);
+      if(cb) cb.checked = true;
+      if(na) na.value = 'yes';
+      restorePill('opp_like_'+i, 'N/A');
+      restorePill('opp_imp_'+i, 'N/A');
+    } else {
+      const r = OPP_REVERSE[score] || OPP_REVERSE[2];
+      restorePill('opp_like_'+i, r.like);
+      restorePill('opp_imp_'+i, r.imp);
+    }
+  });
+}
 // ── Navigation ────────────────────────────────────────────────
 
 function goTo(n) {
@@ -1728,11 +1906,52 @@ async function saveEvaluation() {
 
   const sdgs = allSDGs.map(n => ({number:n, source:'auto'}));
 
+  // Collect all raw input values
+  const rawInputs = {};
+  // Financial
+  FINANCIAL_CRITERIA.forEach((_,i) => {
+    const el = document.getElementById('fin_'+i);
+    if(el) rawInputs['fin_'+i] = el.value;
+  });
+  // Environmental
+  ENV_CRITERIA.forEach((_,i) => {
+    ['mag','scale','irrev','like'].forEach(dim => {
+      const el = document.getElementById('env_'+dim+'_'+i);
+      if(el) rawInputs['env_'+dim+'_'+i] = el.value;
+    });
+  });
+  // Social
+  SOCIAL_CRITERIA.forEach((_,i) => {
+    ['mag','scale','irrev','like'].forEach(dim => {
+      const el = document.getElementById('soc_'+dim+'_'+i);
+      if(el) rawInputs['soc_'+dim+'_'+i] = el.value;
+    });
+  });
+  // Governance
+  GOV_CRITERIA.forEach((_,i) => {
+    ['mag','scale','irrev','like'].forEach(dim => {
+      const el = document.getElementById('gov_'+dim+'_'+i);
+      if(el) rawInputs['gov_'+dim+'_'+i] = el.value;
+    });
+  });
+  // Stage II risks
+  RISKS.forEach((_,i) => {
+    rawInputs['risk_prob_'+i] = document.getElementById('risk_prob_'+i)?.value || 'N/A';
+    rawInputs['risk_imp_'+i] = document.getElementById('risk_imp_'+i)?.value || 'N/A';
+    rawInputs['risk_na_'+i] = document.getElementById('risk_na_'+i)?.value || 'no';
+  });
+  // Stage II opportunities
+  OPPS.forEach((_,i) => {
+    rawInputs['opp_like_'+i] = document.getElementById('opp_like_'+i)?.value || 'N/A';
+    rawInputs['opp_imp_'+i] = document.getElementById('opp_imp_'+i)?.value || 'N/A';
+    rawInputs['opp_na_'+i] = document.getElementById('opp_na_'+i)?.value || 'no';
+  });
+
   try {
     const res = await fetch('/api/evaluations', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({basic, stage1, stage2, sdgs})
+      body: JSON.stringify({basic, stage1, stage2, sdgs, rawInputs})
     });
     const data = await res.json();
     status.textContent = '✅ Saved successfully! (ID: ' + data.id + ')';
@@ -1800,6 +2019,34 @@ async function loadEvaluation(id) {
     allSDGs = sdgs.map(s=>s.sdg_number).sort((a,b)=>a-b);
 
     buildDashboard();
+
+    // Restore visual state of forms
+    setTimeout(() => {
+      if(data.rawInputs && Object.keys(data.rawInputs).length > 0) {
+        restoreFromRawInputs(data.rawInputs);
+      } else {
+        restoreStage1Visuals(envScores, socScores, govScores);
+        restoreStage2Visuals(riskScores, oppScores);
+      }
+    }, 100);
+
+    // Restore Stage I financial dropdowns
+    const FIN_REVERSE = {
+      0: ['Not Evaluated','Not Evaluated','Not Evaluated','Not Evaluated'],
+      1: ['Below Industry Average','High Volatility / Large Sensitivity','No USP','Shrinking'],
+      2: ['Average / No Benchmark','Moderate Volatility','Weak / Moderate USP','Mature'],
+      3: ['Above Industry Average','Low Volatility / Stable','Strong / Unique USP','Growing']
+    };
+    FINANCIAL_CRITERIA.forEach((_,i) => {
+      const el = document.getElementById('fin_'+i);
+      if(el) {
+        // Find closest score match
+        const score = Math.round(stage1Scores.finAvg);
+        const opts = FIN_REVERSE[score] || FIN_REVERSE[0];
+        el.value = opts[i] || 'Not Evaluated';
+      }
+    });
+
     goTo(3);
     const banner = document.getElementById('loaded-banner');
     banner.style.display = 'flex';

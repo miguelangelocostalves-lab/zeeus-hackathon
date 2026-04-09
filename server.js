@@ -16,6 +16,14 @@ if (!fs.existsSync('/app/data')) fs.mkdirSync('/app/data', { recursive: true });
 const db = new Database(DB_PATH);
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS raw_inputs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    evaluation_id INTEGER NOT NULL,
+    input_key TEXT NOT NULL,
+    input_value TEXT NOT NULL,
+    FOREIGN KEY (evaluation_id) REFERENCES evaluations(id)
+  );
+
   CREATE TABLE IF NOT EXISTS evaluations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -124,6 +132,14 @@ const server = http.createServer(async (req, res) => {
     const insertSDG = db.prepare('INSERT INTO sdg_mappings (evaluation_id, sdg_number, source) VALUES (?, ?, ?)');
     for (const s of sdgs) insertSDG.run(evalId, s.number, s.source);
 
+    // Save raw inputs if provided
+    if (body.rawInputs) {
+      const insertRaw = db.prepare('INSERT INTO raw_inputs (evaluation_id, input_key, input_value) VALUES (?, ?, ?)');
+      for (const [key, value] of Object.entries(body.rawInputs)) {
+        insertRaw.run(evalId, key, String(value));
+      }
+    }
+
     jsonRes(res, 201, { id: evalId, message: 'Evaluation saved successfully' });
     return;
   }
@@ -143,13 +159,17 @@ const server = http.createServer(async (req, res) => {
     const stage1 = db.prepare('SELECT * FROM stage1_scores WHERE evaluation_id = ?').all(id);
     const stage2 = db.prepare('SELECT * FROM stage2_scores WHERE evaluation_id = ?').all(id);
     const sdgs = db.prepare('SELECT * FROM sdg_mappings WHERE evaluation_id = ?').all(id);
-    jsonRes(res, 200, { evaluation, stage1, stage2, sdgs });
+    const rawInputs = db.prepare('SELECT input_key, input_value FROM raw_inputs WHERE evaluation_id = ?').all(id);
+    const rawInputsMap = {};
+    rawInputs.forEach(r => rawInputsMap[r.input_key] = r.input_value);
+    jsonRes(res, 200, { evaluation, stage1, stage2, sdgs, rawInputs: rawInputsMap });
     return;
   }
 
   // ── Delete evaluation ───────────────────────────────────
   if (req.method === 'DELETE' && req.url.startsWith('/api/evaluations/')) {
     const id = parseInt(req.url.split('/')[3]);
+    db.prepare('DELETE FROM raw_inputs WHERE evaluation_id = ?').run(id);
     db.prepare('DELETE FROM stage1_scores WHERE evaluation_id = ?').run(id);
     db.prepare('DELETE FROM stage2_scores WHERE evaluation_id = ?').run(id);
     db.prepare('DELETE FROM sdg_mappings WHERE evaluation_id = ?').run(id);
