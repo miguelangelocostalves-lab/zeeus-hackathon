@@ -440,10 +440,10 @@ textarea{resize:vertical;line-height:1.5}
 <!-- PAGE 3: Dashboard -->
 <div class="page" id="p3">
   <div class="dashboard-grid">
-    <div class="metric-card"><div class="m-icon">💰</div><div class="label">Financial</div><div class="value" id="d-fin">–</div><div class="sub">out of 3</div></div>
-    <div class="metric-card"><div class="m-icon">🌿</div><div class="label">Environmental</div><div class="value" id="d-env">–</div><div class="sub">avg impact score</div></div>
-    <div class="metric-card"><div class="m-icon">👥</div><div class="label">Social</div><div class="value" id="d-soc">–</div><div class="sub">avg impact score</div></div>
-    <div class="metric-card"><div class="m-icon">⚖️</div><div class="label">Governance</div><div class="value" id="d-gov">–</div><div class="sub">avg impact score</div></div>
+    <div class="metric-card"><div class="m-icon">💰</div><div class="label">Financial</div><div class="value" id="d-fin">–</div><div class="sub">out of 3</div><div id="d-fin-lbl" style="margin-top:.3rem"></div></div>
+    <div class="metric-card"><div class="m-icon">🌿</div><div class="label">Environmental</div><div class="value" id="d-env">–</div><div class="sub">avg impact score</div><div id="d-env-lbl" style="margin-top:.3rem"></div></div>
+    <div class="metric-card"><div class="m-icon">👥</div><div class="label">Social</div><div class="value" id="d-soc">–</div><div class="sub">avg impact score</div><div id="d-soc-lbl" style="margin-top:.3rem"></div></div>
+    <div class="metric-card"><div class="m-icon">⚖️</div><div class="label">Governance</div><div class="value" id="d-gov">–</div><div class="sub">avg impact score</div><div id="d-gov-lbl" style="margin-top:.3rem"></div></div>
   </div>
 
   <div class="card">
@@ -1162,6 +1162,10 @@ function buildDashboard() {
   document.getElementById('d-env').textContent = envAvg.toFixed(2);
   document.getElementById('d-soc').textContent = socAvg.toFixed(2);
   document.getElementById('d-gov').textContent = govAvg.toFixed(2);
+  document.getElementById('d-fin-lbl').innerHTML = scoreBadgeHtml(finAvg);
+  document.getElementById('d-env-lbl').innerHTML = scoreBadgeHtml(envAvg);
+  document.getElementById('d-soc-lbl').innerHTML = scoreBadgeHtml(socAvg);
+  document.getElementById('d-gov-lbl').innerHTML = scoreBadgeHtml(govAvg);
   document.getElementById('d-risk').textContent = totalRisk.toFixed(1);
   document.getElementById('d-opp').textContent = totalOpp.toFixed(1);
 
@@ -1170,13 +1174,13 @@ function buildDashboard() {
   matDiv.innerHTML = '';
   let hasMaterial = false;
   ENV_CRITERIA.forEach((c,i) => {
-    if(stage1Scores.envScores[i]>=2.5){hasMaterial=true;matDiv.innerHTML+=`<div class="material">🌿 Environmental – ${c.name} <strong>(${stage1Scores.envScores[i].toFixed(2)})</strong></div>`}
+    if(stage1Scores.envScores[i]>=2.5){hasMaterial=true;matDiv.innerHTML+=`<div class="material">🌿 Environmental – ${c.name} ${scoreBadgeHtml(stage1Scores.envScores[i])}</div>`}
   });
   SOCIAL_CRITERIA.forEach((c,i) => {
-    if(stage1Scores.socScores[i]>=2.5){hasMaterial=true;matDiv.innerHTML+=`<div class="material">👥 Social – ${c.name} <strong>(${stage1Scores.socScores[i].toFixed(2)})</strong></div>`}
+    if(stage1Scores.socScores[i]>=2.5){hasMaterial=true;matDiv.innerHTML+=`<div class="material">👥 Social – ${c.name} ${scoreBadgeHtml(stage1Scores.socScores[i])}</div>`}
   });
   GOV_CRITERIA.forEach((c,i) => {
-    if(stage1Scores.govScores[i]>=2.5){hasMaterial=true;matDiv.innerHTML+=`<div class="material">⚖️ Governance – ${c.name} <strong>(${stage1Scores.govScores[i].toFixed(2)})</strong></div>`}
+    if(stage1Scores.govScores[i]>=2.5){hasMaterial=true;matDiv.innerHTML+=`<div class="material">⚖️ Governance – ${c.name} ${scoreBadgeHtml(stage1Scores.govScores[i])}</div>`}
   });
   if(!hasMaterial) matDiv.innerHTML = '<p style="font-size:.85rem;color:#777">No material topics identified (all scores below 2.5).</p>';
 
@@ -1342,6 +1346,20 @@ function exportCSV() {
   a.click();
 }
 
+
+// ── Score Interpretation ──────────────────────────────────────
+function scoreLabel(s) {
+  if(s === 0)   return {label:'Not applicable', color:'#9ca3af', bg:'#f3f4f6'};
+  if(s < 1)     return {label:'Very Low',       color:'#166534', bg:'#dcfce7'};
+  if(s < 2)     return {label:'Low',            color:'#15803d', bg:'#bbf7d0'};
+  if(s < 2.5)   return {label:'Relevant',       color:'#92400e', bg:'#fef3c7'};
+  return         {label:'High Priority',         color:'#b91c1c', bg:'#fee2e2'};
+}
+
+function scoreBadgeHtml(s) {
+  const {label, color, bg} = scoreLabel(s);
+  return `<span style="background:${bg};color:${color};font-size:.72rem;font-weight:700;padding:.15rem .5rem;border-radius:10px">${label} (${s.toFixed(2)})</span>`;
+}
 // ── Navigation ────────────────────────────────────────────────
 
 function goTo(n) {
