@@ -1981,6 +1981,7 @@ function createZSelect(originalSelect) {
       div.onclick = () => {
         originalSelect.value = opt.value;
         originalSelect.dispatchEvent(new Event('change', {bubbles:true}));
+        if(originalSelect.id === 'launched') filterStageOptions();
         btn.innerHTML = `<span${opt.value?'':' class="placeholder"'}>${opt.text}</span><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1l5 5 5-5" stroke="#3FA535" stroke-width="2" stroke-linecap="round"/></svg>`;
         dropdown.querySelectorAll('.z-option').forEach(d=>d.classList.remove('selected'));
         div.classList.add('selected');
