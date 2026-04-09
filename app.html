@@ -2221,7 +2221,7 @@ async function loadSavedEvaluations() {
           </div>
           <div style="display:flex;gap:.4rem">
             <button onclick="event.stopPropagation();loadEvaluation(${e.id})" style="background:#d1fae5;border:none;color:#065f46;border-radius:6px;padding:.3rem .6rem;cursor:pointer;font-size:.75rem;font-weight:600">Load</button>
-            <button onclick="event.stopPropagation();duplicateEvaluation(${e.id})" style="background:#dbeafe;border:none;color:#1e40af;border-radius:6px;padding:.3rem .6rem;cursor:pointer;font-size:.75rem;font-weight:600">Copy</button>
+            <button onclick="event.stopPropagation();event.preventDefault();setTimeout(()=>duplicateEvaluation(${e.id}),50)" style="background:#dbeafe;border:none;color:#1e40af;border-radius:6px;padding:.3rem .6rem;cursor:pointer;font-size:.75rem;font-weight:600">Copy</button>
             <button onclick="event.stopPropagation();deleteEvaluation(${e.id})" style="background:#fee2e2;border:none;color:#b91c1c;border-radius:6px;padding:.3rem .6rem;cursor:pointer;font-size:.75rem">Delete</button>
           </div>
         </div>
@@ -2255,9 +2255,9 @@ async function duplicateEvaluation(id) {
       body: JSON.stringify({basic, stage1, stage2, sdgs, rawInputs: rawInputs||{}})
     });
 
-    await loadSavedEvaluations();
+    setTimeout(() => loadSavedEvaluations(), 200);
   } catch(e) {
-    await loadSavedEvaluations();
+    setTimeout(() => loadSavedEvaluations(), 200);
   }
 }
 
