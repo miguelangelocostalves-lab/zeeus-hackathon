@@ -72,7 +72,23 @@ label{display:block;font-size:.78rem;font-weight:600;color:var(--text2);margin-b
 input[type=text],select,textarea{width:100%;padding:.55rem .85rem;border:1.5px solid var(--border);border-radius:8px;font-size:.88rem;background:var(--white);color:var(--text);transition:.15s;font-family:inherit}
 select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%233FA535' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .85rem center;padding-right:2.2rem}
 select:focus{border-color:#39B54A;box-shadow:0 0 0 3px rgba(57,181,74,.15)}
-select option:checked{background:#eaf7e6;color:#00654A}
+
+/* Custom dropdown */
+.z-select-wrap{position:relative;width:100%}
+.z-select-btn{width:100%;padding:.55rem .85rem;border:1.5px solid var(--border);border-radius:8px;font-size:.88rem;background:var(--white);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:.5rem;transition:.15s;font-family:inherit;text-align:left}
+.z-select-btn:hover{border-color:#39B54A}
+.z-select-btn.open{border-color:#39B54A;box-shadow:0 0 0 3px rgba(57,181,74,.15)}
+.z-select-btn svg{flex-shrink:0;transition:transform .2s}
+.z-select-btn.open svg{transform:rotate(180deg)}
+.z-select-btn .placeholder{color:#9ca3af}
+.z-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--white);border:1.5px solid #39B54A;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:1000;max-height:220px;overflow-y:auto;display:none}
+.z-dropdown.open{display:block;animation:dropIn .15s ease}
+@keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.z-option{padding:.55rem .85rem;font-size:.88rem;cursor:pointer;color:var(--text);transition:.1s;display:flex;align-items:center;justify-content:space-between}
+.z-option:hover{background:#eaf7e6;color:#00654A}
+.z-option.selected{background:#eaf7e6;color:#3FA535;font-weight:600}
+.z-option.selected::after{content:'✓';color:#3FA535;font-weight:700}
+.z-option.placeholder-opt{color:#9ca3af}
 input[type=text]:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(52,196,124,.15)}
 textarea{resize:vertical;line-height:1.5}
 
@@ -1374,6 +1390,7 @@ function goTo(n) {
   const prog = document.getElementById('prog');
   if(prog) prog.style.width = ((n/(PAGES.length-1))*100)+'%';
   if(n===3 && stage1Scores.finAvg!==undefined) { setTimeout(()=>rebuildChart(), 50); }
+  setTimeout(initZSelects, 50);
   if(n===4 && stage1Scores.finAvg!==undefined) buildInsights();
   if(n===5) loadSavedEvaluations();
 }
@@ -1898,9 +1915,81 @@ async function deleteEvaluation(id) {
   loadSavedEvaluations();
 }
 
+
+// ── Custom Dropdowns ──────────────────────────────────────────
+
+function createZSelect(originalSelect) {
+  if(!originalSelect || originalSelect.dataset.zselect) return;
+  originalSelect.dataset.zselect = '1';
+  originalSelect.style.display = 'none';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'z-select-wrap';
+  originalSelect.parentNode.insertBefore(wrap, originalSelect);
+  wrap.appendChild(originalSelect);
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'z-select-btn';
+  btn.innerHTML = `<span class="placeholder">${originalSelect.options[0]?.text||'Select…'}</span><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1l5 5 5-5" stroke="#3FA535" stroke-width="2" stroke-linecap="round"/></svg>`;
+  wrap.insertBefore(btn, originalSelect);
+
+  const dropdown = document.createElement('div');
+  dropdown.className = 'z-dropdown';
+  wrap.appendChild(dropdown);
+
+  function buildOptions() {
+    dropdown.innerHTML = '';
+    Array.from(originalSelect.options).forEach((opt, i) => {
+      const div = document.createElement('div');
+      div.className = 'z-option' + (i===0?' placeholder-opt':'') + (opt.selected?' selected':'');
+      div.textContent = opt.text;
+      div.dataset.value = opt.value;
+      div.onclick = () => {
+        originalSelect.value = opt.value;
+        originalSelect.dispatchEvent(new Event('change', {bubbles:true}));
+        btn.innerHTML = `<span${opt.value?'':' class="placeholder"'}>${opt.text}</span><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1l5 5 5-5" stroke="#3FA535" stroke-width="2" stroke-linecap="round"/></svg>`;
+        dropdown.querySelectorAll('.z-option').forEach(d=>d.classList.remove('selected'));
+        div.classList.add('selected');
+        closeDropdown();
+      };
+      dropdown.appendChild(div);
+    });
+  }
+
+  function openDropdown() {
+    document.querySelectorAll('.z-dropdown.open').forEach(d=>{d.classList.remove('open');d.previousElementSibling?.classList.remove('open');});
+    btn.classList.add('open');
+    dropdown.classList.add('open');
+    buildOptions();
+  }
+  function closeDropdown() { btn.classList.remove('open'); dropdown.classList.remove('open'); }
+
+  btn.onclick = (e) => { e.stopPropagation(); dropdown.classList.contains('open')?closeDropdown():openDropdown(); };
+  document.addEventListener('click', ()=>closeDropdown());
+
+  // Sync if value changes programmatically
+  const origSetter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+  originalSelect.addEventListener('change', ()=>{
+    const sel = originalSelect.options[originalSelect.selectedIndex];
+    if(sel) btn.innerHTML = `<span${sel.value?'':' class="placeholder"'}>${sel.text}</span><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1l5 5 5-5" stroke="#3FA535" stroke-width="2" stroke-linecap="round"/></svg>`;
+  });
+
+  // Set initial value if already selected
+  if(originalSelect.value) {
+    const sel = originalSelect.options[originalSelect.selectedIndex];
+    if(sel) btn.querySelector('span').textContent = sel.text;
+  }
+}
+
+function initZSelects() {
+  document.querySelectorAll('select:not([data-zselect])').forEach(createZSelect);
+}
+
 // ── Init ──────────────────────────────────────────────────────
 buildStage1UI();
 buildStage2UI();
+setTimeout(initZSelects, 100);
 </script>
 </body>
 </html>
