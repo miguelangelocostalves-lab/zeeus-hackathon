@@ -1922,33 +1922,42 @@ async function deleteEvaluation(id) {
 function filterStageOptions() {
   const launched = document.getElementById('launched').value;
   const stageSelect = document.getElementById('stage');
-  const preLaunch  = ['1','2','3','4','5'];  // Ideation → Launch
-  const postLaunch = ['6','7','8','9','10']; // PMF → Early Scale
+  const preLaunch  = ['1','2','3','4','5'];
+  const postLaunch = ['6','7','8','9','10'];
 
+  // Mark options as hidden on the real select
   Array.from(stageSelect.options).forEach(opt => {
-    if(!opt.value) return; // keep placeholder
-    if(launched === 'No')  opt.hidden = postLaunch.includes(opt.value);
+    if(!opt.value) { opt.hidden = false; return; }
+    if(launched === 'No')   opt.hidden = postLaunch.includes(opt.value);
     else if(launched === 'Yes') opt.hidden = preLaunch.includes(opt.value);
     else opt.hidden = false;
   });
 
-  // Reset stage if current selection is now hidden
-  const current = stageSelect.value;
-  if(current) {
-    const selectedOpt = stageSelect.querySelector(`option[value="${current}"]`);
-    if(selectedOpt?.hidden) {
-      stageSelect.value = '';
-      // Refresh custom dropdown display
-      const wrap = stageSelect.closest('.z-select-wrap');
-      if(wrap) {
-        const btn = wrap.querySelector('.z-select-btn span');
-        if(btn) { btn.textContent = 'Select stage…'; btn.className = 'placeholder'; }
-      }
-    }
+  // Reset if current value is now invalid
+  const cur = stageSelect.value;
+  if(cur) {
+    const curOpt = Array.from(stageSelect.options).find(o=>o.value===cur);
+    if(curOpt?.hidden) stageSelect.value = '';
   }
 
-  // Rebuild custom dropdown if open
-  initZSelects();
+  // Force rebuild the custom dropdown for stage
+  const wrap = stageSelect.closest('.z-select-wrap');
+  if(wrap) {
+    // Remove and recreate the custom dropdown
+    const oldBtn = wrap.querySelector('.z-select-btn');
+    const oldDrop = wrap.querySelector('.z-dropdown');
+    if(oldBtn) oldBtn.remove();
+    if(oldDrop) oldDrop.remove();
+    delete stageSelect.dataset.zselect;
+    createZSelect(stageSelect);
+    // Update label
+    const sel = stageSelect.options[stageSelect.selectedIndex];
+    const newBtn = wrap.querySelector('.z-select-btn span');
+    if(newBtn && sel) {
+      newBtn.textContent = sel.text;
+      newBtn.className = sel.value ? '' : 'placeholder';
+    }
+  }
 }
 
 function createZSelect(originalSelect) {
@@ -1974,6 +1983,7 @@ function createZSelect(originalSelect) {
   function buildOptions() {
     dropdown.innerHTML = '';
     Array.from(originalSelect.options).forEach((opt, i) => {
+      if(opt.hidden) return;
       const div = document.createElement('div');
       div.className = 'z-option' + (i===0?' placeholder-opt':'') + (opt.selected?' selected':'');
       div.textContent = opt.text;
