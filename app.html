@@ -180,6 +180,10 @@ textarea{resize:vertical;line-height:1.5}
   </div>
   <div class="header-badge">Web Edition</div>
 </div>
+<div id="loaded-banner" style="display:none;background:#dbeafe;border-bottom:1px solid #93c5fd;padding:.5rem 1.5rem;align-items:center;justify-content:space-between;font-size:.83rem;color:#1e40af;gap:.75rem;flex-wrap:wrap">
+  <span>📂 Loaded: <strong id="loaded-name"></strong></span>
+  <button onclick="newEvaluation()" style="background:#fff;border:1px solid #93c5fd;color:#1e40af;border-radius:6px;padding:.25rem .75rem;cursor:pointer;font-size:.78rem;font-weight:600">✨ New evaluation</button>
+</div>
 <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>
 
 <div class="nav">
@@ -205,8 +209,35 @@ textarea{resize:vertical;line-height:1.5}
           <option>Kenya</option><option>Nigeria</option><option>Other</option>
         </select>
       </div>
+      <div><label>Business category (Main)</label>
+        <select id="bizcat_main" onchange="syncMainCat()">
+          <option value="">Select category…</option>
+          <option value="agri">Agriculture, Forestry, and Fishing</option>
+          <option value="mining">Mining and Quarrying</option>
+          <option value="mfg">Manufacturing</option>
+          <option value="energy">Electricity, Gas, Steam, and Air Conditioning Supply</option>
+          <option value="water">Water Supply; Sewerage, Waste Management</option>
+          <option value="construction">Construction</option>
+          <option value="trade">Wholesale and Retail Trade</option>
+          <option value="transport">Transportation and Storage</option>
+          <option value="hospitality">Accommodation and Food Service Activities</option>
+          <option value="ict">Information and Communication</option>
+          <option value="finance">Financial and Insurance Activities</option>
+          <option value="realestate">Real Estate Activities</option>
+          <option value="science">Professional, Scientific, and Technical Activities</option>
+          <option value="admin">Administrative and Support Service Activities</option>
+          <option value="public">Public Administration and Defence</option>
+          <option value="education">Education</option>
+          <option value="health">Human Health and Social Work Activities</option>
+          <option value="arts">Arts, Entertainment, and Recreation</option>
+          <option value="other_svc">Other Service Activities</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:.85rem">
       <div>
-        <label>Business category (NACE)</label>
+        <label>Extended NACE list <span style="font-weight:400;color:var(--text3)">(optional — if not found above)</span></label>
         <select id="bizcat" onchange="updateSubcats()">
           <option value="">Select NACE division…</option>
           <option value="nace_01">01 Crop and animal production, hunting and related service activities</option>
@@ -298,6 +329,10 @@ textarea{resize:vertical;line-height:1.5}
           <option value="nace_99">99 Activities of extraterritorial organisations and bodies</option>
         </select>
       </div>
+      <div id="subcat-wrap" style="visibility:hidden">
+        <label>Subcategory <span style="font-weight:400;color:var(--text3)">(optional)</span></label>
+        <select id="bizcat_sub"><option value="">Select subcategory…</option></select>
+      </div>
     </div>
     <div class="form-row full">
       <div><label>Brief description of your business idea</label>
@@ -336,14 +371,104 @@ textarea{resize:vertical;line-height:1.5}
         </select>
       </div>
     </div>
-        <div id="subcat-wrap" style="visibility:hidden;margin-bottom:.85rem">
-      <div style="max-width:50%">
-        <label>Subcategory <span style="font-weight:400;color:var(--text3)">(optional)</span></label>
-        <select id="bizcat_sub">
-          <option value="">Select subcategory…</option>
-        </select>
-      </div>
+
+  </div>
+  <div class="btn-row"><button class="btn btn-primary" onclick="saveBasicAndNext()">Continue to Stage I →</button></div>
+</div>
+
+<!-- PAGE 1: Stage I -->
+<div class="page" id="p1">
+  <div class="info-box">
+    <span class="info-box-icon">💡</span>
+    <div><strong>Stage I – Inside-Out Assessment</strong><br>
+    Assess the impact your startup has on people and the environment. For each aspect, rate the Magnitude, Scale, and Irreversibility of the impact, then its Likelihood. A topic is considered <strong>material</strong> if its score ≥ 2.</div>
+  </div>
+
+  <div class="card">
+    <h2>Financial aspects</h2>
+    <div id="financial-items"></div>
+  </div>
+
+  <div class="impact-grid">
+    <div class="card">
+      <h2>Environmental aspects</h2>
+      <div id="env-items"></div>
     </div>
+    <div class="card">
+      <h2>Social aspects</h2>
+      <div id="social-items"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Governance aspects</h2>
+    <div id="gov-items"></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-outline" onclick="goTo(0)">← Back</button>
+    <button class="btn btn-primary" onclick="calcStage1()">Calculate & Continue →</button>
+  </div>
+</div>
+
+<!-- PAGE 2: Stage II -->
+<div class="page" id="p2">
+  <div class="info-box">
+    <span class="info-box-icon">⚠️</span>
+    <div><strong>Stage II – Outside-In Assessment</strong><br>
+    Assess external risks and opportunities that could affect your startup. For risks: Probability × Impact. For opportunities: Likelihood × Impact.</div>
+  </div>
+  <div class="card">
+    <h2>Risks</h2>
+    <div id="risk-items"></div>
+  </div>
+  <div class="card">
+    <h2>Opportunities</h2>
+    <div id="opp-items"></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-outline" onclick="goTo(1)">← Back</button>
+    <button class="btn btn-primary" onclick="calcStage2()">Calculate Dashboard →</button>
+  </div>
+</div>
+
+<!-- PAGE 3: Dashboard -->
+<div class="page" id="p3">
+  <div class="dashboard-grid">
+    <div class="metric-card"><div class="m-icon">💰</div><div class="label">Financial</div><div class="value" id="d-fin">–</div><div class="sub">out of 3</div></div>
+    <div class="metric-card"><div class="m-icon">🌿</div><div class="label">Environmental</div><div class="value" id="d-env">–</div><div class="sub">avg impact score</div></div>
+    <div class="metric-card"><div class="m-icon">👥</div><div class="label">Social</div><div class="value" id="d-soc">–</div><div class="sub">avg impact score</div></div>
+    <div class="metric-card"><div class="m-icon">⚖️</div><div class="label">Governance</div><div class="value" id="d-gov">–</div><div class="sub">avg impact score</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-icon green">📊</div><div><h2>Impact scores overview</h2><div class="card-sub">Visualise your sustainability performance</div></div></div>
+    <div class="chart-toggle">
+      <button class="active" onclick="switchChart('bar')" id="btn-bar">Bar chart</button>
+      <button onclick="switchChart('radar')" id="btn-radar">Radar chart</button>
+      <button onclick="switchChart('polarArea')" id="btn-polarArea">Polar area</button>
+    </div>
+    <div class="chart-wrap"><canvas id="chartImpact"></canvas></div>
+  </div>
+
+  <div class="card" id="material-card">
+    <div class="card-header"><div class="card-icon amber">⚡</div><div><h2>Material topics (score ≥ 2.5)</h2><div class="card-sub">Topics requiring priority attention</div></div></div>
+    <div id="material-list"></div>
+  </div>
+
+  <div class="card" id="watch-card" style="display:none">
+    <div class="card-header"><div class="card-icon amber">👁️</div><div><h2>Watch list (score 2.0 – 2.5)</h2><div class="card-sub">These topics are approaching materiality — monitor closely</div></div></div>
+    <div id="watch-list"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-icon red">🎯</div><div><h2>Risk & Opportunity matrix</h2><div class="card-sub">Outside-in financial materiality assessment</div></div></div>
+    <div id="risk-matrix-display"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem">
+      <div class="metric-card"><div class="label">Total Risk score</div><div class="value" id="d-risk" style="color:#ef4444">–</div><div class="sub">lower is better</div></div>
+      <div class="metric-card"><div class="label">Total Opportunity score</div><div class="value" id="d-opp" style="color:#22c55e">–</div><div class="sub">higher is better</div></div>
+    </div>
+  </div>
 
   <div class="card">
     <div class="card-header"><div class="card-icon blue">🌍</div><div><h2>SDG alignment</h2><div class="card-sub">UN Sustainable Development Goals relevant to your startup</div></div></div>
@@ -446,6 +571,27 @@ const MAGNITUDE_MAP = {'Low':1,'Moderate':2,'Significant':3,'High':4,'N/A':0};
 const LIKELIHOOD_MAP = {'Very unlikely':0.25,'Unlikely':0.5,'Likely':0.75,'Very likely':1,'N/A':0};
 const RISK_PROB_MAP = {'Very likely':1,'Likely':0.75,'Could occur':0.5,'Rare':0.25,'N/A':0};
 const RISK_IMPACT_MAP = {'High':4,'Significant':3,'Moderate':2,'Low':1,'N/A':0};
+
+// Exact risk matrix from FAQ (Probability x Impact → score 0-4)
+const RISK_MATRIX = {
+  'Very likely': {'High':4,'Significant':4,'Moderate':3,'Low':2,'N/A':0},
+  'Likely':      {'High':4,'Significant':3,'Moderate':3,'Low':1,'N/A':0},
+  'Could occur': {'High':3,'Significant':3,'Moderate':2,'Low':2,'N/A':0},
+  'Rare':        {'High':3,'Significant':2,'Moderate':1,'Low':1,'N/A':0},
+  'N/A':         {'High':0,'Significant':0,'Moderate':0,'Low':0,'N/A':0}
+};
+
+// Exact opportunity matrix from FAQ (Likelihood x Impact → score 0-4)
+const OPP_MATRIX = {
+  'Very likely': {'High':4,'Significant':4,'Moderate':4,'Low':4,'N/A':1},
+  'Likely':      {'High':4,'Significant':4,'Moderate':3,'Low':3,'N/A':2},
+  'Could occur': {'High':3,'Significant':3,'Moderate':2,'Low':2,'N/A':1},
+  'Rare':        {'High':3,'Significant':2,'Moderate':2,'Low':1,'N/A':1},
+  'N/A':         {'High':2,'Significant':1,'Moderate':1,'Low':1,'N/A':0}
+};
+
+const RISK_RATING_LABEL = {0:'Neutral',1:'Sustainable',2:'Moderate',3:'Severe',4:'Critical'};
+const OPP_RATING_LABEL  = {0:'Neutral',1:'Small',2:'Reasonable',3:'Sustainable',4:'Great'};
 const RISK_RATING = {1:'Sustainable',2:'Moderate',3:'Severe',4:'Critical',0:'Neutral'};
 const OPP_RATING = {1:'Small',2:'Reasonable',3:'Sustainable',4:'Great',0:'Neutral'};
 
@@ -683,6 +829,12 @@ const SDG_NAMES = {
 
 // ── Build UI ──────────────────────────────────────────────────
 
+function syncMainCat() {
+  // When main category selected, clear NACE extended selection
+  document.getElementById('bizcat').value = '';
+  document.getElementById('subcat-wrap').style.visibility = 'hidden';
+}
+
 function updateSubcats() {
   const val = document.getElementById('bizcat').value;
   const wrap = document.getElementById('subcat-wrap');
@@ -904,17 +1056,17 @@ function calcStage2() {
   let riskScores = RISKS.map((_,i) => {
     const na = document.getElementById(`risk_na_${i}`).value;
     if(na==='yes') return 0;
-    const p = RISK_PROB_MAP[document.getElementById(`risk_prob_${i}`).value]||0;
-    const imp = RISK_IMPACT_MAP[document.getElementById(`risk_imp_${i}`).value]||0;
-    return p * imp;
+    const prob = document.getElementById(`risk_prob_${i}`).value || 'N/A';
+    const imp  = document.getElementById(`risk_imp_${i}`).value  || 'N/A';
+    return (RISK_MATRIX[prob] || RISK_MATRIX['N/A'])[imp] ?? 0;
   });
 
   let oppScores = OPPS.map((_,i) => {
     const na = document.getElementById(`opp_na_${i}`).value;
     if(na==='yes') return 0;
-    const l = RISK_PROB_MAP[document.getElementById(`opp_like_${i}`).value]||0;
-    const imp = RISK_IMPACT_MAP[document.getElementById(`opp_imp_${i}`).value]||0;
-    return l * imp;
+    const like = document.getElementById(`opp_like_${i}`).value || 'N/A';
+    const imp  = document.getElementById(`opp_imp_${i}`).value  || 'N/A';
+    return (OPP_MATRIX[like] || OPP_MATRIX['N/A'])[imp] ?? 0;
   });
 
   stage2Scores = {riskScores, oppScores};
@@ -954,7 +1106,7 @@ function rebuildChart() {
   const {envScores, socScores, govScores} = stage1Scores;
   const allLabels = [...ENV_CRITERIA.map(c=>c.name), ...SOCIAL_CRITERIA.map(c=>c.name), ...GOV_CRITERIA.map(c=>c.name)];
   const allVals = [...envScores, ...socScores, ...govScores];
-  const colors = allVals.map(v=>v>=2?'rgba(229,62,62,0.75)':'rgba(52,196,124,0.75)');
+  const colors = allVals.map(v=>v>=2.5?'rgba(229,62,62,0.75)':'rgba(52,196,124,0.75)');
   const ctx = document.getElementById('chartImpact').getContext('2d');
   if(chartInstance) chartInstance.destroy();
 
@@ -964,20 +1116,20 @@ function rebuildChart() {
     chartInstance = new Chart(ctx,{
       type:'radar',
       data:{labels:radarLabels,datasets:[{label:'Score',data:radarVals.map(v=>parseFloat(v.toFixed(2))),backgroundColor:'rgba(52,196,124,0.2)',borderColor:'rgba(26,92,52,0.8)',borderWidth:2,pointBackgroundColor:'#1a5c34',pointRadius:5}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:4,ticks:{stepSize:1,font:{size:10}},grid:{color:'rgba(0,0,0,0.07)'},pointLabels:{font:{size:11,weight:'600'}}}}}
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},annotation:{annotations:{threshold:{type:'line',scaleID:'r',value:2.5,borderColor:'rgba(245,158,11,0.8)',borderWidth:2,borderDash:[6,3],label:{content:'2.5',display:true,font:{size:10}}}}}},scales:{r:{min:0,max:4,ticks:{stepSize:1,font:{size:10}},grid:{color:'rgba(0,0,0,0.07)'},pointLabels:{font:{size:11,weight:'600'}}}}}
     });
   } else if(currentChartType==='polarArea'){
     const polarLabels = [...ENV_CRITERIA.map(c=>c.name.split(' ')[0]), ...SOCIAL_CRITERIA.map(c=>c.name.split('(')[0].trim()), ...GOV_CRITERIA.map(c=>c.name.split('(')[0].trim())];
     chartInstance = new Chart(ctx,{
       type:'polarArea',
       data:{labels:polarLabels,datasets:[{data:allVals.map(v=>parseFloat(v.toFixed(2))),backgroundColor:colors,borderWidth:1,borderColor:'rgba(255,255,255,.5)'}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:12}}},scales:{r:{min:0,max:4,ticks:{display:false}}}}
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:12}},annotation:{annotations:{threshold:{type:'line',scaleID:'r',value:2.5,borderColor:'rgba(245,158,11,0.9)',borderWidth:2,borderDash:[6,3]}}}},scales:{r:{min:0,max:4,ticks:{display:false}}}}
     });
   } else {
     chartInstance = new Chart(ctx,{
       type:'bar',
       data:{labels:allLabels,datasets:[{label:'Impact Score',data:allVals.map(v=>parseFloat(v.toFixed(2))),backgroundColor:colors,borderRadius:6,borderSkipped:false}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>'Score: '+ctx.raw}},annotation:{annotations:{threshold:{type:'line',yMin:2,yMax:2,borderColor:'rgba(245,158,11,0.8)',borderWidth:2,borderDash:[6,3],label:{content:'Materiality threshold (2)',display:true,position:'end',font:{size:10},color:'#92400e',backgroundColor:'rgba(254,243,199,0.9)'}}}}},scales:{x:{ticks:{font:{size:10}},grid:{display:false}},y:{min:0,max:4,grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{size:11}}}}}
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>'Score: '+ctx.raw}},annotation:{annotations:{threshold:{type:'line',yMin:2.5,yMax:2.5,borderColor:'rgba(245,158,11,0.8)',borderWidth:2,borderDash:[6,3],label:{content:'Materiality threshold (2.5)',display:true,position:'end',font:{size:10},color:'#92400e',backgroundColor:'rgba(254,243,199,0.9)'}}}}},scales:{x:{ticks:{font:{size:10}},grid:{display:false}},y:{min:0,max:4,grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{size:11}}}}}
     });
   }
 }
@@ -1004,15 +1156,37 @@ function buildDashboard() {
   matDiv.innerHTML = '';
   let hasMaterial = false;
   ENV_CRITERIA.forEach((c,i) => {
-    if(stage1Scores.envScores[i]>=2){hasMaterial=true;matDiv.innerHTML+=`<div class="material">🌿 Environmental – ${c.name} <strong>(${stage1Scores.envScores[i].toFixed(2)})</strong></div>`}
+    if(stage1Scores.envScores[i]>=2.5){hasMaterial=true;matDiv.innerHTML+=`<div class="material">🌿 Environmental – ${c.name} <strong>(${stage1Scores.envScores[i].toFixed(2)})</strong></div>`}
   });
   SOCIAL_CRITERIA.forEach((c,i) => {
-    if(stage1Scores.socScores[i]>=2){hasMaterial=true;matDiv.innerHTML+=`<div class="material">👥 Social – ${c.name} <strong>(${stage1Scores.socScores[i].toFixed(2)})</strong></div>`}
+    if(stage1Scores.socScores[i]>=2.5){hasMaterial=true;matDiv.innerHTML+=`<div class="material">👥 Social – ${c.name} <strong>(${stage1Scores.socScores[i].toFixed(2)})</strong></div>`}
   });
   GOV_CRITERIA.forEach((c,i) => {
-    if(stage1Scores.govScores[i]>=2){hasMaterial=true;matDiv.innerHTML+=`<div class="material">⚖️ Governance – ${c.name} <strong>(${stage1Scores.govScores[i].toFixed(2)})</strong></div>`}
+    if(stage1Scores.govScores[i]>=2.5){hasMaterial=true;matDiv.innerHTML+=`<div class="material">⚖️ Governance – ${c.name} <strong>(${stage1Scores.govScores[i].toFixed(2)})</strong></div>`}
   });
-  if(!hasMaterial) matDiv.innerHTML = '<p style="font-size:.85rem;color:#777">No material topics identified (all scores below 2).</p>';
+  if(!hasMaterial) matDiv.innerHTML = '<p style="font-size:.85rem;color:#777">No material topics identified (all scores below 2.5).</p>';
+
+  const watchCard = document.getElementById('watch-card');
+  const watchDiv = document.getElementById('watch-list');
+  let watchItems = [];
+  ENV_CRITERIA.forEach((c,i) => {
+    const s = stage1Scores.envScores[i];
+    if(s>=2 && s<2.5) watchItems.push(`<div class="material" style="background:#fff7ed;border-color:#f97316">⚠️ Environmental – ${c.name} <strong>(${s.toFixed(2)})</strong></div>`);
+  });
+  SOCIAL_CRITERIA.forEach((c,i) => {
+    const s = stage1Scores.socScores[i];
+    if(s>=2 && s<2.5) watchItems.push(`<div class="material" style="background:#fff7ed;border-color:#f97316">⚠️ Social – ${c.name} <strong>(${s.toFixed(2)})</strong></div>`);
+  });
+  GOV_CRITERIA.forEach((c,i) => {
+    const s = stage1Scores.govScores[i];
+    if(s>=2 && s<2.5) watchItems.push(`<div class="material" style="background:#fff7ed;border-color:#f97316">⚠️ Governance – ${c.name} <strong>(${s.toFixed(2)})</strong></div>`);
+  });
+  if(watchItems.length > 0) {
+    watchCard.style.display = 'block';
+    watchDiv.innerHTML = watchItems.join('');
+  } else {
+    watchCard.style.display = 'none';
+  }
 
   // Chart
   if(chartInstance) chartInstance.destroy();
@@ -1026,7 +1200,7 @@ function buildDashboard() {
       datasets:[{
         label:'Impact Score',
         data: allVals.map(v=>parseFloat(v.toFixed(2))),
-        backgroundColor: allVals.map(v=>v>=2?'rgba(239,68,68,0.7)':'rgba(26,74,46,0.6)'),
+        backgroundColor: allVals.map(v=>v>=2.5?'rgba(239,68,68,0.7)':'rgba(26,74,46,0.6)'),
         borderRadius:4
       }]
     },
@@ -1043,6 +1217,8 @@ function buildDashboard() {
   // Risk matrix display - proper 4x4 visual
   const riskDiv = document.getElementById('risk-matrix-display');
   const matColors = {0:'#e5e7eb',1:'#bbf7d0',2:'#fef08a',3:'#fca5a5',4:'#f87171'};
+  const riskLabels = {0:'Neutral',1:'Sustainable',2:'Moderate',3:'Severe',4:'Critical'};
+  const oppLabels  = {0:'Neutral',1:'Small',2:'Reasonable',3:'Sustainable',4:'Great'};
   const matLabels = ['','Low','Moderate','Significant','High'];
   const probLabels = ['','Rare','Could occur','Likely','Very likely'];
   
@@ -1085,7 +1261,16 @@ function buildDashboard() {
 
   // SDGs
   const cat = document.getElementById('bizcat').value;
-  const catSDGs = SDG_BY_CATEGORY[cat] || [];
+  // Use extended NACE if selected, otherwise map main category to NACE equivalent
+  const MAIN_TO_NACE = {
+    agri:'nace_01', mining:'nace_05', mfg:'nace_10', energy:'nace_35',
+    water:'nace_36', construction:'nace_41', trade:'nace_46', transport:'nace_49',
+    hospitality:'nace_55', ict:'nace_62', finance:'nace_64', realestate:'nace_68',
+    science:'nace_71', admin:'nace_78', public:'nace_84', education:'nace_85',
+    health:'nace_86', arts:'nace_90', other_svc:'nace_96', other:''
+  };
+  const effectiveCat = cat.startsWith('nace_') ? cat : (MAIN_TO_NACE[cat] || cat);
+  const catSDGs = SDG_BY_CATEGORY[effectiveCat] || [];
   // Add impact-based SDGs
   const extra = [];
   if(avg(stage1Scores.envScores)>=1.5) extra.push(13,15);
@@ -1160,7 +1345,7 @@ function goTo(n) {
 
 function saveBasicAndNext() {
   if(!document.getElementById('name').value){alert('Please fill in the startup name.');return;}
-  if(!document.getElementById('bizcat').value){alert('Please select a business category.');return;}
+  if(!document.getElementById('bizcat_main').value && !document.getElementById('bizcat').value){alert('Please select a business category.');return;}
   goTo(1);
 }
 
@@ -1203,7 +1388,7 @@ function buildInsights() {
   const recs = [];
   if(finAvg < 2) recs.push({icon:'💰', title:'Strengthen financial fundamentals', text:'Your financial scores are below the industry average. Consider developing robust KPIs such as ROI, IRR and NPV, and conduct sensitivity analysis to stress-test your business model.'});
   ENV_CRITERIA.forEach((c,i)=>{
-    if(envScores[i]>=2){
+    if(envScores[i]>=2.5){
       const tips = {
         'Water':'Implement water efficiency measures and monitor consumption across your value chain. Consider water recycling and report against ESRS E3 targets.',
         'Pollution':'Develop a pollution prevention plan covering air, water and soil emissions. Map your key emission sources and set reduction targets.',
@@ -1215,7 +1400,7 @@ function buildInsights() {
     }
   });
   SOCIAL_CRITERIA.forEach((c,i)=>{
-    if(socScores[i]>=2){
+    if(socScores[i]>=2.5){
       const tips = {
         'Own Workforce (S1)':'Review HR policies to ensure fair pay, safe conditions and equal opportunities. Report workforce metrics under ESRS S1.',
         'Supply Chain (S2)':'Map your supply chain for human rights risks. Implement supplier codes of conduct and conduct periodic audits.',
@@ -1259,10 +1444,10 @@ function buildInsights() {
   // ── Action Plan ────────────────────────────────────────────
   const actions = [];
   // Collect all issues with urgency
-  ENV_CRITERIA.forEach((c,i)=>{ if(envScores[i]>=2) actions.push({urgency:envScores[i],label:'🌿 '+c.name,action:'Develop mitigation plan, set measurable targets, align with ESRS E standards.',timeline:'0-3 months'}); });
-  SOCIAL_CRITERIA.forEach((c,i)=>{ if(socScores[i]>=2) actions.push({urgency:socScores[i],label:'👥 '+c.name,action:'Review policies, implement controls, report under ESRS S standards.',timeline:'0-3 months'}); });
-  RISKS.forEach((r,i)=>{ if(riskScores[i]>=2) actions.push({urgency:riskScores[i],label:'⚠️ Risk: '+r.cat,action:'Develop risk mitigation strategy and contingency plan.',timeline:'1-6 months'}); });
-  OPPS.forEach((o,i)=>{ if(oppScores[i]>=2) actions.push({urgency:oppScores[i],label:'🚀 Opportunity: '+o.cat,action:'Build business case and implementation plan to capture this opportunity.',timeline:'3-12 months'}); });
+  ENV_CRITERIA.forEach((c,i)=>{ if(envScores[i]>=2.5) actions.push({urgency:envScores[i],label:'🌿 '+c.name,action:'Develop mitigation plan, set measurable targets, align with ESRS E standards.',timeline:'0-3 months'}); });
+  SOCIAL_CRITERIA.forEach((c,i)=>{ if(socScores[i]>=2.5) actions.push({urgency:socScores[i],label:'👥 '+c.name,action:'Review policies, implement controls, report under ESRS S standards.',timeline:'0-3 months'}); });
+  RISKS.forEach((r,i)=>{ if(riskScores[i]>=2.5) actions.push({urgency:riskScores[i],label:'⚠️ Risk: '+r.cat,action:'Develop risk mitigation strategy and contingency plan.',timeline:'1-6 months'}); });
+  OPPS.forEach((o,i)=>{ if(oppScores[i]>=2.5) actions.push({urgency:oppScores[i],label:'🚀 Opportunity: '+o.cat,action:'Build business case and implementation plan to capture this opportunity.',timeline:'3-12 months'}); });
   if(finAvg<2) actions.push({urgency:3-finAvg,label:'💰 Financial KPIs',action:'Establish financial benchmarks, conduct sensitivity analysis and build investor-ready projections.',timeline:'0-6 months'});
   actions.sort((a,b)=>b.urgency-a.urgency);
 
@@ -1321,9 +1506,9 @@ async function getAIRecommendations() {
   const {riskScores, oppScores} = stage2Scores;
 
   const materialTopics = [];
-  ENV_CRITERIA.forEach((c,i)=>{ if(envScores[i]>=2) materialTopics.push('Environmental - '+c.name); });
-  SOCIAL_CRITERIA.forEach((c,i)=>{ if(socScores[i]>=2) materialTopics.push('Social - '+c.name); });
-  GOV_CRITERIA.forEach((c,i)=>{ if(govScores[i]>=2) materialTopics.push('Governance - '+c.name); });
+  ENV_CRITERIA.forEach((c,i)=>{ if(envScores[i]>=2.5) materialTopics.push('Environmental - '+c.name); });
+  SOCIAL_CRITERIA.forEach((c,i)=>{ if(socScores[i]>=2.5) materialTopics.push('Social - '+c.name); });
+  GOV_CRITERIA.forEach((c,i)=>{ if(govScores[i]>=2.5) materialTopics.push('Governance - '+c.name); });
 
   const topRisks = RISKS.map((r,i)=>({name:r.cat,score:riskScores[i]})).filter(r=>r.score>=1.5).map(r=>r.name);
   const topOpps = OPPS.map((o,i)=>({name:o.cat,score:oppScores[i]})).filter(o=>o.score>=1.5).map(o=>o.name);
@@ -1377,9 +1562,9 @@ function printReport() {
   const totalOpp = oppScores.reduce((a,b)=>a+b,0);
 
   const materialTopics = [];
-  ENV_CRITERIA.forEach((c,i)=>{ if(envScores[i]>=2) materialTopics.push('Environmental – '+c.name+' ('+envScores[i].toFixed(2)+')'); });
-  SOCIAL_CRITERIA.forEach((c,i)=>{ if(socScores[i]>=2) materialTopics.push('Social – '+c.name+' ('+socScores[i].toFixed(2)+')'); });
-  GOV_CRITERIA.forEach((c,i)=>{ if(govScores[i]>=2) materialTopics.push('Governance – '+c.name+' ('+govScores[i].toFixed(2)+')'); });
+  ENV_CRITERIA.forEach((c,i)=>{ if(envScores[i]>=2.5) materialTopics.push('Environmental – '+c.name+' ('+envScores[i].toFixed(2)+')'); });
+  SOCIAL_CRITERIA.forEach((c,i)=>{ if(socScores[i]>=2.5) materialTopics.push('Social – '+c.name+' ('+socScores[i].toFixed(2)+')'); });
+  GOV_CRITERIA.forEach((c,i)=>{ if(govScores[i]>=2.5) materialTopics.push('Governance – '+c.name+' ('+govScores[i].toFixed(2)+')'); });
 
   const aiText = document.getElementById('ai-result')?.innerHTML || '';
 
@@ -1459,7 +1644,7 @@ async function saveEvaluation() {
     name: document.getElementById('name').value || 'Unnamed',
     country: document.getElementById('country').value,
     stage: document.getElementById('stage').value,
-    bizcat: document.getElementById('bizcat').value,
+    bizcat: document.getElementById('bizcat').value || document.getElementById('bizcat_main').value,
     approach: document.getElementById('approach').value,
     prodservice: document.getElementById('prodservice').value,
     launched: document.getElementById('launched').value,
@@ -1494,6 +1679,151 @@ async function saveEvaluation() {
   }
 }
 
+function newEvaluation() {
+  stage1Scores = {}; stage2Scores = {}; allSDGs = [];
+  document.getElementById('name').value = '';
+  document.getElementById('country').value = '';
+  document.getElementById('stage').value = '';
+  document.getElementById('bizcat').value = '';
+  document.getElementById('bizcat_main').value = '';
+  document.getElementById('approach').value = '';
+  document.getElementById('prodservice').value = '';
+  document.getElementById('launched').value = '';
+  document.getElementById('description').value = '';
+  buildStage1UI(); buildStage2UI();
+  document.getElementById('loaded-banner').style.display = 'none';
+  goTo(0);
+}
+
+async function loadEvaluation(id) {
+  try {
+    const res = await fetch('/api/evaluations/' + id);
+    const data = await res.json();
+    const { evaluation, stage1, stage2, sdgs } = data;
+
+    document.getElementById('name').value = evaluation.name || '';
+    document.getElementById('country').value = evaluation.country || '';
+    document.getElementById('stage').value = evaluation.stage || '';
+    document.getElementById('bizcat').value = evaluation.bizcat?.startsWith('nace_') ? evaluation.bizcat : '';
+    document.getElementById('bizcat_main').value = !evaluation.bizcat?.startsWith('nace_') ? (evaluation.bizcat||'') : '';
+    document.getElementById('approach').value = evaluation.approach || '';
+    document.getElementById('prodservice').value = evaluation.prodservice || '';
+    document.getElementById('launched').value = evaluation.launched || '';
+    document.getElementById('description').value = evaluation.description || '';
+
+    const envScores = Array(ENV_CRITERIA.length).fill(0);
+    const socScores = Array(SOCIAL_CRITERIA.length).fill(0);
+    const govScores = Array(GOV_CRITERIA.length).fill(0);
+    let finAvg = 0;
+    stage1.forEach(s => {
+      if(s.dimension==='financial'){finAvg=s.score;return;}
+      if(s.dimension==='environmental'){const idx=ENV_CRITERIA.findIndex(c=>c.name===s.criterion);if(idx>=0)envScores[idx]=s.score;}
+      else if(s.dimension==='social'){const idx=SOCIAL_CRITERIA.findIndex(c=>c.name===s.criterion);if(idx>=0)socScores[idx]=s.score;}
+      else if(s.dimension==='governance'){const idx=GOV_CRITERIA.findIndex(c=>c.name===s.criterion);if(idx>=0)govScores[idx]=s.score;}
+    });
+    stage1Scores = {finAvg, envScores, socScores, govScores, finScores:[]};
+
+    const riskScores = Array(RISKS.length).fill(0);
+    const oppScores = Array(OPPS.length).fill(0);
+    stage2.forEach(s => {
+      if(s.type==='risk'){const idx=RISKS.findIndex(r=>r.cat===s.category);if(idx>=0)riskScores[idx]=s.score;}
+      else{const idx=OPPS.findIndex(o=>o.cat===s.category);if(idx>=0)oppScores[idx]=s.score;}
+    });
+    stage2Scores = {riskScores, oppScores};
+    allSDGs = sdgs.map(s=>s.sdg_number).sort((a,b)=>a-b);
+
+    buildDashboard();
+    goTo(3);
+    const banner = document.getElementById('loaded-banner');
+    banner.style.display = 'flex';
+    document.getElementById('loaded-name').textContent = evaluation.name;
+  } catch(e) {
+    alert('Error loading: ' + e.message);
+  }
+}
+
+async function previewEvaluation(id, headerEl) {
+  const previewDiv = document.getElementById('preview-' + id);
+  if(!previewDiv) return;
+  if(previewDiv.style.display === 'block') { previewDiv.style.display = 'none'; return; }
+  previewDiv.style.display = 'block';
+  previewDiv.innerHTML = '<span style="color:#777">Loading…</span>';
+  try {
+    const res = await fetch('/api/evaluations/' + id);
+    const data = await res.json();
+    const { evaluation, stage1, stage2, sdgs } = data;
+    const finScore = stage1.find(s=>s.dimension==='financial')?.score||0;
+    const envScores = stage1.filter(s=>s.dimension==='environmental').map(s=>s.score);
+    const socScores = stage1.filter(s=>s.dimension==='social').map(s=>s.score);
+    const govScores = stage1.filter(s=>s.dimension==='governance').map(s=>s.score);
+    const envAvg = envScores.length?envScores.reduce((a,b)=>a+b,0)/envScores.length:0;
+    const socAvg = socScores.length?socScores.reduce((a,b)=>a+b,0)/socScores.length:0;
+    const govAvg = govScores.length?govScores.reduce((a,b)=>a+b,0)/govScores.length:0;
+    const totalRisk = stage2.filter(s=>s.type==='risk').reduce((a,s)=>a+s.score,0);
+    const totalOpp = stage2.filter(s=>s.type==='opportunity').reduce((a,s)=>a+s.score,0);
+    const materialTopics = stage1.filter(s=>s.dimension!=='financial'&&s.score>=2.5);
+    const sdgList = sdgs.map(s=>'SDG '+s.sdg_number).join(', ');
+    const maxRisk=6*4;
+    const finNorm=(finScore/3)*100;
+    const envNorm=Math.max(0,100-(envAvg/4)*100);
+    const socNorm=Math.max(0,100-(socAvg/4)*100);
+    const govNorm=Math.max(0,100-(govAvg/4)*100);
+    const riskNorm=Math.max(0,100-(totalRisk/maxRisk)*100);
+    const oppNorm=(totalOpp/(6*4))*100;
+    const maturity=Math.round(finNorm*0.2+envNorm*0.2+socNorm*0.2+govNorm*0.1+riskNorm*0.15+oppNorm*0.15);
+    const matLevel=maturity>=80?'Advanced':maturity>=60?'Developing':maturity>=40?'Emerging':'Initial';
+    const matColor=maturity>=80?'#1a4a2e':maturity>=60?'#16a34a':maturity>=40?'#f59e0b':'#ef4444';
+    const bizcatName = evaluation.bizcat ? evaluation.bizcat.replace('nace_','NACE ') : '–';
+    const riskList=stage2.filter(s=>s.type==='risk').sort((a,b)=>b.score-a.score);
+    const oppList=stage2.filter(s=>s.type==='opportunity').sort((a,b)=>b.score-a.score);
+    const topRisk=riskList[0]; const topOpp=oppList[0];
+    previewDiv.innerHTML = `
+      <div style="margin-bottom:.75rem">
+        <div style="font-size:.72rem;color:#777;text-transform:uppercase;margin-bottom:.2rem">Context</div>
+        <div style="font-size:.82rem">${bizcatName} · Stage ${evaluation.stage||'–'} · ${evaluation.country||'–'}</div>
+      </div>
+      <div style="margin-bottom:.75rem">
+        <div style="display:flex;justify-content:space-between;margin-bottom:.25rem">
+          <div style="font-size:.72rem;color:#777;text-transform:uppercase">Sustainability maturity</div>
+          <div style="font-size:.82rem;font-weight:700;color:${matColor}">${maturity}/100 · ${matLevel}</div>
+        </div>
+        <div style="background:#e8e8e8;border-radius:20px;height:10px;overflow:hidden">
+          <div style="height:100%;border-radius:20px;background:${matColor};width:${maturity}%"></div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-bottom:.75rem">
+        ${[{label:'Financial',val:finScore,max:3},{label:'Environmental',val:envAvg,max:4},{label:'Social',val:socAvg,max:4},{label:'Governance',val:govAvg,max:4}].map(p=>`
+          <div style="background:#f0f7f2;border-radius:6px;padding:.4rem;text-align:center">
+            <div style="font-size:.62rem;color:#777;text-transform:uppercase;margin-bottom:.2rem">${p.label}</div>
+            <div style="font-size:1rem;font-weight:700;color:#1a5c34">${p.val.toFixed(1)}</div>
+            <div style="background:#e8e8e8;border-radius:10px;height:4px;margin-top:.25rem;overflow:hidden">
+              <div style="height:100%;border-radius:10px;background:#1a5c34;width:${Math.min(100,(p.val/p.max)*100)}%"></div>
+            </div>
+          </div>`).join('')}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.75rem">
+        <div style="background:#fee2e2;border-radius:6px;padding:.5rem">
+          <div style="font-size:.68rem;color:#777;text-transform:uppercase;margin-bottom:.2rem">Total risk · ${totalRisk.toFixed(1)}</div>
+          <div style="font-size:.78rem;font-weight:600;color:#b91c1c">${topRisk?'⚠️ '+topRisk.category+' ('+topRisk.score.toFixed(1)+')':'No risks'}</div>
+        </div>
+        <div style="background:#d1fae5;border-radius:6px;padding:.5rem">
+          <div style="font-size:.68rem;color:#777;text-transform:uppercase;margin-bottom:.2rem">Total opportunity · ${totalOpp.toFixed(1)}</div>
+          <div style="font-size:.78rem;font-weight:600;color:#065f46">${topOpp?'🚀 '+topOpp.category+' ('+topOpp.score.toFixed(1)+')':'No opportunities'}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:1rem;flex-wrap:wrap">
+        <div style="flex:1;min-width:150px">
+          <div style="font-size:.72rem;color:#777;text-transform:uppercase;margin-bottom:.25rem">Material topics (≥2.5)</div>
+          ${materialTopics.length?materialTopics.map(s=>`<div style="font-size:.78rem;background:#fef3c7;border-left:2px solid #f59e0b;padding:.2rem .5rem;border-radius:0 4px 4px 0;margin-bottom:.2rem">⚡ ${s.criterion} (${s.score.toFixed(2)})</div>`).join(''):'<div style="font-size:.78rem;color:#777">None identified</div>'}
+        </div>
+        <div style="flex:1;min-width:150px">
+          <div style="font-size:.72rem;color:#777;text-transform:uppercase;margin-bottom:.25rem">SDG alignment</div>
+          <div style="font-size:.78rem;color:#1a5c34">${sdgList||'–'}</div>
+        </div>
+      </div>`;
+  } catch(e) { previewDiv.innerHTML = '<span style="color:#b91c1c">Error loading preview.</span>'; }
+}
+
 async function loadSavedEvaluations() {
   const div = document.getElementById('saved-list');
   if(!div) return;
@@ -1504,14 +1834,24 @@ async function loadSavedEvaluations() {
       div.innerHTML = '<p style="font-size:.85rem;color:#777">No saved evaluations yet.</p>';
       return;
     }
-    div.innerHTML = data.map(e => `
-      <div style="display:flex;align-items:center;gap:.75rem;padding:.75rem;background:var(--bg);border-radius:8px;margin-bottom:.5rem">
-        <div style="flex:1">
-          <div style="font-size:.88rem;font-weight:600">${e.name}</div>
-          <div style="font-size:.75rem;color:var(--text3)">${e.country||'–'} · Stage ${e.stage||'–'} · ${new Date(e.created_at).toLocaleDateString()}</div>
+    div.innerHTML = data.map(e => {
+      const dt = new Date(e.created_at.endsWith('Z') ? e.created_at : e.created_at + 'Z');
+      const dateStr = dt.toLocaleDateString('pt-PT',{timeZone:'Europe/Lisbon'}) + ' ' + dt.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Lisbon'});
+      return `
+      <div style="border-radius:8px;margin-bottom:.5rem;overflow:hidden;border:1px solid var(--border)">
+        <div onclick="previewEvaluation(${e.id},this)" style="display:flex;align-items:center;gap:.75rem;padding:.75rem;background:var(--bg);cursor:pointer;transition:.15s" onmouseover="this.style.background='#e8f5e9'" onmouseout="this.style.background='var(--bg)'">
+          <div style="flex:1">
+            <div style="font-size:.88rem;font-weight:600">${e.name}</div>
+            <div style="font-size:.75rem;color:var(--text3)">${e.country||'–'} · Stage ${e.stage||'–'} · ${dateStr}</div>
+          </div>
+          <div style="display:flex;gap:.4rem">
+            <button onclick="event.stopPropagation();loadEvaluation(${e.id})" style="background:#d1fae5;border:none;color:#065f46;border-radius:6px;padding:.3rem .6rem;cursor:pointer;font-size:.75rem;font-weight:600">Load</button>
+            <button onclick="event.stopPropagation();deleteEvaluation(${e.id})" style="background:#fee2e2;border:none;color:#b91c1c;border-radius:6px;padding:.3rem .6rem;cursor:pointer;font-size:.75rem">Delete</button>
+          </div>
         </div>
-        <button onclick="deleteEvaluation(${e.id})" style="background:#fee2e2;border:none;color:#b91c1c;border-radius:6px;padding:.3rem .6rem;cursor:pointer;font-size:.75rem">Delete</button>
-      </div>`).join('');
+        <div id="preview-${e.id}" style="display:none;padding:1rem;background:#fff;border-top:1px solid var(--border)"></div>
+      </div>`;
+    }).join('');
   } catch(e) {
     div.innerHTML = '<p style="font-size:.82rem;color:#b91c1c">Could not load saved evaluations.</p>';
   }
