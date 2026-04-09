@@ -1298,9 +1298,46 @@ function buildDashboard() {
     const cls = s>=3?'score-low':s>=1.5?'score-mid':'score-high';
     matHtml += `<div style="display:flex;align-items:center;gap:.75rem;margin:.3rem 0">
       <span style="flex:1;font-size:.8rem">${r.cat} – ${r.name.substring(0,50)}…</span>
-      <span class="score-badge ${cls}">${s.toFixed(2)}</span>
+      <span class="score-badge ${cls}">${riskLabels[s]||s} (${s.toFixed(2)})</span>
     </div>`;
   });
+
+  // Opportunity matrix
+  matHtml += '<hr style="margin:1rem 0;border:none;border-top:1px solid var(--border)">';
+  matHtml += '<p style="font-size:.82rem;color:#555;margin-bottom:.75rem;font-weight:500">Opportunity matrix (Likelihood × Impact)</p>';
+  matHtml += '<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:.72rem;width:100%">';
+  matHtml += '<tr><td style="padding:4px;color:#777;font-weight:600">Likelihood / Impact →</td>';
+  for(let i=1;i<=4;i++) matHtml += `<td style="padding:4px 8px;text-align:center;font-weight:600;color:#555">${matLabels[i]}</td>`;
+  matHtml += '</tr>';
+
+  for(let p=4;p>=1;p--){
+    matHtml += `<tr><td style="padding:4px;font-weight:600;color:#555">${probLabels[p]}</td>`;
+    for(let imp=1;imp<=4;imp++){
+      const col = matColors[(OPP_MATRIX[['','Rare','Could occur','Likely','Very likely'][p]]||{})[['','Low','Moderate','Significant','High'][imp]]||0];
+      const cellOpps = OPPS.filter((_,i)=>{
+        const na = document.getElementById('opp_na_'+i)?.value;
+        const ol = document.getElementById('opp_like_'+i)?.value;
+        const oi = document.getElementById('opp_imp_'+i)?.value;
+        const likeScore = {'Very likely':4,'Likely':3,'Could occur':2,'Rare':1}[ol]||0;
+        const impScore = {'High':4,'Significant':3,'Moderate':2,'Low':1}[oi]||0;
+        return na!=='yes' && likeScore===p && impScore===imp;
+      }).map(o=>o.cat.split(' ')[0]);
+      matHtml += `<td style="padding:4px 8px;text-align:center;background:${col||'#e5e7eb'};border-radius:4px;min-width:60px">${cellOpps.join(', ')||''}</td>`;
+    }
+    matHtml += '</tr>';
+  }
+  matHtml += '</table></div>';
+
+  matHtml += '<p style="font-size:.75rem;margin-top:.75rem;color:#22c55e;font-weight:500">Opportunity scores per item:</p>';
+  OPPS.forEach((o,i) => {
+    const s = stage2Scores.oppScores[i];
+    const cls = s>=3?'score-high':s>=1.5?'score-mid':'score-low';
+    matHtml += `<div style="display:flex;align-items:center;gap:.75rem;margin:.3rem 0">
+      <span style="flex:1;font-size:.8rem">${o.cat} – ${o.name.substring(0,50)}…</span>
+      <span class="score-badge ${cls}">${oppLabels[s]||s} (${s.toFixed(2)})</span>
+    </div>`;
+  });
+
   riskDiv.innerHTML = matHtml;
 
   // SDGs
