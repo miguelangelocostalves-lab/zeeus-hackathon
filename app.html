@@ -368,7 +368,7 @@ textarea{resize:vertical;line-height:1.5}
         <select id="prodservice"><option value="">Select…</option><option>Product</option><option>Service</option><option>Both</option></select>
       </div>
       <div><label>Is it already launched?</label>
-        <select id="launched"><option value="">Select…</option><option>Yes</option><option>No</option></select>
+        <select id="launched" onchange="filterStageOptions()"><option value="">Select…</option><option>Yes</option><option>No</option></select>
       </div>
     </div>
     <div class="form-row">
@@ -1917,6 +1917,39 @@ async function deleteEvaluation(id) {
 
 
 // ── Custom Dropdowns ──────────────────────────────────────────
+
+
+function filterStageOptions() {
+  const launched = document.getElementById('launched').value;
+  const stageSelect = document.getElementById('stage');
+  const preLaunch  = ['1','2','3','4','5'];  // Ideation → Launch
+  const postLaunch = ['6','7','8','9','10']; // PMF → Early Scale
+
+  Array.from(stageSelect.options).forEach(opt => {
+    if(!opt.value) return; // keep placeholder
+    if(launched === 'No')  opt.hidden = postLaunch.includes(opt.value);
+    else if(launched === 'Yes') opt.hidden = preLaunch.includes(opt.value);
+    else opt.hidden = false;
+  });
+
+  // Reset stage if current selection is now hidden
+  const current = stageSelect.value;
+  if(current) {
+    const selectedOpt = stageSelect.querySelector(`option[value="${current}"]`);
+    if(selectedOpt?.hidden) {
+      stageSelect.value = '';
+      // Refresh custom dropdown display
+      const wrap = stageSelect.closest('.z-select-wrap');
+      if(wrap) {
+        const btn = wrap.querySelector('.z-select-btn span');
+        if(btn) { btn.textContent = 'Select stage…'; btn.className = 'placeholder'; }
+      }
+    }
+  }
+
+  // Rebuild custom dropdown if open
+  initZSelects();
+}
 
 function createZSelect(originalSelect) {
   if(!originalSelect || originalSelect.dataset.zselect) return;
