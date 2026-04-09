@@ -1387,8 +1387,8 @@ function scoreLabel(s) {
 function finScoreLabel(s) {
   if(s === 0)   return {label:'Not evaluated',  color:'#9ca3af', bg:'#f3f4f6'};
   if(s < 1)     return {label:'Weak',           color:'#b91c1c', bg:'#fee2e2'};
-  if(s < 2)     return {label:'Below average',  color:'#92400e', bg:'#fef3c7'};
-  if(s < 3)     return {label:'Average',        color:'#15803d', bg:'#bbf7d0'};
+  if(s < 1.5)   return {label:'Below average',  color:'#92400e', bg:'#fef3c7'};
+  if(s < 2.5)   return {label:'Average',        color:'#15803d', bg:'#bbf7d0'};
   return         {label:'Strong',               color:'#166534', bg:'#dcfce7'};
 }
 
